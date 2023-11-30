@@ -6,9 +6,7 @@ pool:
 steps:
 - task: AzureCLI@2
   inputs:
+    azureSubscription: 'Visual Studio Enterprise Subscription – MPN(1abd2ed2-8cfd-487a-8b4a-1feeb4498ccd)'
     scriptType: 'ps'
     scriptLocation: 'inlineScript'
     inlineScript: |
-      asd
-      asdasd
-      asd
