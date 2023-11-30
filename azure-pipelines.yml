@@ -3,11 +3,15 @@ trigger: none
 pool:
   vmImage: 'windows-latest'
 
-steps:
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Visual Studio Enterprise Subscription – MPN(1abd2ed2-8cfd-487a-8b4a-1feeb4498ccd)'
-    scriptType: 'ps'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      az vm create --resource-group test-resource-group --name test-vm --image "MicrosoftWindowsDesktop:windows-10:win10-21h2-pro:latest"  --admin-username testuser --admin-password "Ts0rg123_Ts0rg123"
+jobs:
+- deployment: VMDeploy
+  displayName: Deploy to test VM
+  environment: 
+   name: TestVM
+   resourceName: TestVM
+   resourceType: virtualMachine
+  strategy:
+     runOnce:
+        deploy:   
+          steps:
+            - script: echo "Hello world"
