@@ -10,3 +10,4 @@ steps:
     scriptType: 'ps'
     scriptLocation: 'inlineScript'
     inlineScript: |
+      az vm create --resource-group test-resource-group --name test-vm --image "MicrosoftWindowsDesktop:windows-10:win10-21h2-pro:latest"  --admin-username testuser --admin-password "Ts0rg123_Ts0rg123"
