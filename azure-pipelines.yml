@@ -8,7 +8,7 @@ jobs:
   displayName: Deploy to test VM
   environment: 
    name: TestVM
-   resourceName: TestVM
+   resourceName: manual-test-vm
    resourceType: virtualMachine
   strategy:
      runOnce:
