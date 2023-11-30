@@ -1,0 +1,14 @@
+trigger: none
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: AzureCLI@2
+  inputs:
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      asd
+      asdasd
+      asd
