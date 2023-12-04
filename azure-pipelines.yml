@@ -14,4 +14,19 @@ jobs:
      runOnce:
         deploy:   
           steps:
-            - script: mkdir C:\TEST
+            - task: VisualStudioTestPlatformInstaller@1
+              inputs:
+                packageFeedSelector: 'nugetOrg'
+                versionSelector: 'specificVersion'
+                testPlatformVersion: '16.11.0'
+            - task: ScreenResolutionUtility@1
+              inputs:
+                displaySettings: 'specific'
+                width: '1920'
+                height: '1080'
+            - task: Windows Application Driver@0
+              inputs:
+                OperationType: 'Start'
+            - task: Windows Application Driver@0
+              inputs:
+                OperationType: 'Start'
