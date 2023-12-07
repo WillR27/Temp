@@ -4,19 +4,18 @@ pool:
  name: UITestPoolAzure
  
 steps:
-  - task: VisualStudioTestPlatformInstaller@1
-    inputs:
-      packageFeedSelector: 'nugetOrg'
-      versionSelector: 'specificVersion'
-      testPlatformVersion: '16.11.0'
   - task: ScreenResolutionUtility@1
     inputs:
       displaySettings: 'specific'
       width: '1920'
       height: '1080'
-  - task: Windows Application Driver@0
+  - task: VSTest@3
     inputs:
-      OperationType: 'Start'
-  - task: Windows Application Driver@0
-    inputs:
-      OperationType: 'Start'
+      testSelector: 'testAssemblies'
+      testAssemblyVer2: '"C:\Program Files (x86)\MooD\17\Test_UI.dll"'
+      searchFolder: '$(System.DefaultWorkingDirectory)'
+      resultsFolder: 'C:\Temp\TestResults'
+      uiTests: true
+      vstestLocationMethod: 'location'
+      vstestLocation: 'C:\Users\testuser\Desktop\microsoft.testplatform.16.0.1\tools\net451\Common7\IDE\Extensions\TestPlatform\vstest.console.exe'
+      publishRunAttachments: false
