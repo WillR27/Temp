@@ -20,7 +20,7 @@ steps:
   - task: VSTest@3
     inputs:
       testSelector: 'testAssemblies'
-      testAssemblyVer2: '"C:\Program Files (x86)\MooD\17\Test_UI.dll"'
+      testAssemblyVer2: 'C:\Program Files (x86)\MooD\17\Test_UI.dll'
       searchFolder: '$(System.DefaultWorkingDirectory)'
       resultsFolder: 'C:\Temp\TestResults'
       uiTests: true
