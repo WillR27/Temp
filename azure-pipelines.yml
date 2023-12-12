@@ -14,7 +14,7 @@ steps:
       azureSubscription: 'WR-VS'
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
-      inlineScript: 'az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --top 10 --query "[?definition.name==''MooD Trunk Nightly Build''].buildNumber | [0]"'
+      inlineScript: 'az disk list'
   - task: ScreenResolutionUtility@1
     inputs:
       displaySettings: 'specific'
