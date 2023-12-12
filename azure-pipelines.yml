@@ -9,6 +9,12 @@ steps:
       packageFeedSelector: 'nugetOrg'
       versionSelector: 'specificVersion'
       testPlatformVersion: '16.11.0'
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'WR-VS'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: 'az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --top 10 --query "[?definition.name==''MooD Trunk Nightly Build''].buildNumber | [0]"'
   - task: ScreenResolutionUtility@1
     inputs:
       displaySettings: 'specific'
