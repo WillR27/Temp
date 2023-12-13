@@ -3,30 +3,35 @@ trigger: none
 pool:
   vmImage: 'windows-latest'
 
-jobs:
-- deployment: VMDeploy
-  displayName: Deploy to test VM
-  environment: 
-   name: TestVM
-   resourceName: manual-test-vm
-   resourceType: virtualMachine
-  strategy:
-     runOnce:
-        deploy:   
-          steps:
-            - task: VisualStudioTestPlatformInstaller@1
-              inputs:
-                packageFeedSelector: 'nugetOrg'
-                versionSelector: 'specificVersion'
-                testPlatformVersion: '16.11.0'
-            - task: ScreenResolutionUtility@1
-              inputs:
-                displaySettings: 'specific'
-                width: '1920'
-                height: '1080'
-            - task: Windows Application Driver@0
-              inputs:
-                OperationType: 'Start'
-            - task: Windows Application Driver@0
-              inputs:
-                OperationType: 'Start'
+steps:
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'WR-VS'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        $resourceGroup = "test-resource-group"
+        $restoreCollection = "Test"
+        $vmName = "manual-test-vm"
+        
+        $newDiskName = [guid]::NewGuid()
+        
+        $osDiskRestorePoint = az restore-point show --resource-group $resourceGroup --collection-name $restoreCollection --name "Test-rp-2023-12-04-09-44-49" --query "sourceMetadata.storageProfile.osDisk.diskRestorePoint.id"
+         
+        Write-Host Got restore point
+        
+        $oldOSDiskName = az vm show --resource-group $resourceGroup -n $vmName --query "storageProfile.osDisk.name"
+        
+        Write-Host "Got old disk name: $oldOSDiskName"
+        
+        az disk create --resource-group $resourceGroup --name $newDiskName --sku Premium_LRS --size-gb 128 --source $osDiskRestorePoint --zone 1
+        
+        Write-Host Created disk
+        
+        az vm update -g $resourceGroup -n $vmName --os-disk $newDiskName
+        
+        Write-Host Updated OS disk
+        
+        az disk delete --resource-group $resourceGroup --name $oldOSDiskName --yes
+        
+        Write-Host Deleted old disk
