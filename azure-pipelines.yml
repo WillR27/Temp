@@ -1,32 +1,39 @@
 trigger: none
 
 pool:
-  vmImage: 'windows-latest'
-
-jobs:
-- deployment: VMDeploy
-  displayName: Deploy to test VM
-  environment: 
-   name: TestVM
-   resourceName: manual-test-vm
-   resourceType: virtualMachine
-  strategy:
-     runOnce:
-        deploy:   
-          steps:
-            - task: VisualStudioTestPlatformInstaller@1
-              inputs:
-                packageFeedSelector: 'nugetOrg'
-                versionSelector: 'specificVersion'
-                testPlatformVersion: '16.11.0'
-            - task: ScreenResolutionUtility@1
-              inputs:
-                displaySettings: 'specific'
-                width: '1920'
-                height: '1080'
-            - task: Windows Application Driver@0
-              inputs:
-                OperationType: 'Start'
-            - task: Windows Application Driver@0
-              inputs:
-                OperationType: 'Start'
+ name: UITestPoolAzure
+ 
+steps:
+  - task: VisualStudioTestPlatformInstaller@1
+    inputs:
+      packageFeedSelector: 'nugetOrg'
+      versionSelector: 'specificVersion'
+      testPlatformVersion: '16.11.0'
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'WR-VS'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: 'az disk list'
+  - task: ScreenResolutionUtility@1
+    inputs:
+      displaySettings: 'specific'
+      width: '1920'
+      height: '1080'
+  - task: Windows Application Driver@0
+    inputs:
+      OperationType: 'Start'
+  - task: VSTest@3
+    inputs:
+      testSelector: 'testAssemblies'
+      testAssemblyVer2: 'C:\Program Files (x86)\MooD\17\Test_UI.dll'
+      #testFiltercriteria: 'Name~ActionPanelsButtonCloseWindow'
+      searchFolder: '$(System.DefaultWorkingDirectory)'
+      resultsFolder: 'C:\Temp\TestResults'
+      uiTests: true
+      vstestLocationMethod: 'location'
+      vstestLocation: 'C:\Users\testuser\Desktop\microsoft.testplatform.16.0.1\tools\net451\Common7\IDE\Extensions\TestPlatform\vstest.console.exe'
+      publishRunAttachments: false
+  - task: Windows Application Driver@0
+    inputs:
+      OperationType: 'Stop'
