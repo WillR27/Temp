@@ -16,7 +16,7 @@ steps:
 
         $newDiskName = [guid]::NewGuid()
 
-        $osDiskRestorePoint = az restore-point show --resource-group $resourceGroup --collection-name $restoreCollection --name "Test-rp-2023-12-6-10-23-24" --query "sourceMetadata.storageProfile.osDisk.diskRestorePoint.id"
+        $osDiskRestorePoint = az restore-point show --resource-group $resourceGroup --collection-name $restoreCollection --name "ui-test-rp" --query "sourceMetadata.storageProfile.osDisk.diskRestorePoint.id"
         
         Write-Host Got restore point
 
