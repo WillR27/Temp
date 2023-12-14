@@ -5,7 +5,6 @@ pool:
 
 steps:
   - task: VisualStudioTestPlatformInstaller@1
-    enabled: false
     inputs:
       packageFeedSelector: 'nugetOrg'
       versionSelector: 'specificVersion'
