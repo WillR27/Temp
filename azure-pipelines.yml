@@ -55,9 +55,9 @@ steps:
       searchFolder: '$(System.DefaultWorkingDirectory)'
       resultsFolder: 'C:\Temp\TestResults'
       uiTests: true
-      vsTestVersion: 'toolsInstaller'
-      #vstestLocationMethod: 'location'
-      #vstestLocation: 'C:\Users\testuser\Desktop\vsts-agent-win-x64-3.232.0\_work\_temp\VsTest\tools\net451\Common7\IDE\Extensions\TestPlatform\vstest.console.exe'
+      #vsTestVersion: 'toolsInstaller'
+      vstestLocationMethod: 'location'
+      vstestLocation: 'C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe'
       publishRunAttachments: false
   - task: Windows Application Driver@0
     inputs:
