@@ -3,6 +3,10 @@ trigger: none
 pool:
  name: UITestPoolAzure
  
+variables:
+- name: AZURE_DEVOPS_EXT_PAT
+  value: pm6zs6dbszgg3aszqhmtrxo5jn5rlhs3qivvbasyxvpdl7vg2h4a
+ 
 steps:
   - task: VisualStudioTestPlatformInstaller@1
     inputs:
