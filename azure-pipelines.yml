@@ -16,7 +16,7 @@ steps:
       scriptLocation: 'inlineScript'
       inlineScript: |
         az config set extension.use_dynamic_install=yes_without_prompt
-        echo $(System.AccessToken) | az devops login
+        echo $env:DOPAT | az devops login
 
         $tempDirectory = "C:\Temp\Downloads\"
         Remove-Item -Path $tempDirectory -Force -Recurse -ErrorAction Ignore
