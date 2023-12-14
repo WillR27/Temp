@@ -59,7 +59,7 @@ steps:
       resultsFolder: 'C:\Temp\TestResults'
       uiTests: true
       vstestLocationMethod: 'location'
-      vstestLocation: 'C:\Users\testuser\Desktop\microsoft.testplatform.16.0.1\tools\net451\Common7\IDE\Extensions\TestPlatform\vstest.console.exe'
+      vstestLocation: 'C:\Users\testuser\Desktop\vsts-agent-win-x64-3.232.0\_work\_temp\VsTest\tools\net451\Common7\IDE\Extensions\TestPlatform\vstest.console.exe'
       publishRunAttachments: false
   - task: Windows Application Driver@0
     inputs:
