@@ -14,11 +14,7 @@ steps:
       azureSubscription: 'WR-VS'
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
-      inlineScript: 'az disk list'
-  - task: PowerShell@2
-    inputs:
-      targetType: 'inline'
-      script: |
+      inlineScript: |
         $tempDirectory = "C:\Temp\Downloads\"
         Remove-Item -Path $tempDirectory -Force -Recurse -ErrorAction Ignore
 
