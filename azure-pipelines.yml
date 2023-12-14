@@ -18,7 +18,7 @@ steps:
         $tempDirectory = "C:\Temp\Downloads\"
         Remove-Item -Path $tempDirectory -Force -Recurse -ErrorAction Ignore
 
-        $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --top 10 --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
+        $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
         
         Write-Host Downloading build artifacts
         az pipelines runs artifact download --artifact-name CPPTestsZip --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
