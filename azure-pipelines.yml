@@ -2,7 +2,11 @@ trigger: none
 
 pool:
  name: UITestPoolAzure
- 
+
+variables:
+- name: AZURE_DEVOPS_EXT_PAT
+  value: $(System.AccessToken)
+
 steps:
   - task: VisualStudioTestPlatformInstaller@1
     inputs:
