@@ -2,11 +2,7 @@ trigger: none
 
 pool:
  name: UITestPoolAzure
- 
-variables:
-- name: AZURE_DEVOPS_EXT_PAT
-  value: pm6zs6dbszgg3aszqhmtrxo5jn5rlhs3qivvbasyxvpdl7vg2h4a
- 
+
 steps:
   - task: VisualStudioTestPlatformInstaller@1
     inputs:
@@ -19,6 +15,7 @@ steps:
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
       inlineScript: |
+        $env:AZURE_DEVOPS_EXT_PAT = pm6zs6dbszgg3aszqhmtrxo5jn5rlhs3qivvbasyxvpdl7vg2h4a
         $tempDirectory = "C:\Temp\Downloads\"
         Remove-Item -Path $tempDirectory -Force -Recurse -ErrorAction Ignore
 
