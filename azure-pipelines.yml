@@ -15,6 +15,9 @@ steps:
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
       inlineScript: |
+        Write-Host $(System.AccessToken)
+        Write-Host $(system.AccessToken)
+        $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
         $tempDirectory = "C:\Temp\Downloads\"
         Remove-Item -Path $tempDirectory -Force -Recurse -ErrorAction Ignore
 
