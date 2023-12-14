@@ -13,7 +13,7 @@ steps:
         $resourceGroup = "test-resource-group"
         $restoreCollection = "Test"
         $vmName = "manual-test-vm"
-        $restorePointName = "ui-test-rp-2"
+        $restorePointName = "ui-tests-rp"
 
         $newDiskName = [guid]::NewGuid()
 
