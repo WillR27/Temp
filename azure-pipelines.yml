@@ -4,10 +4,7 @@ pool:
  name: UITestPoolAzure
 
 steps:
-  - task: NodeTool@0
-    inputs:
-      versionSource: 'spec'
-      checkLatest: true
+
   - task: CmdLine@2
     inputs:
       script: 'npm install chromedriver --detect_chromedriver_version'
