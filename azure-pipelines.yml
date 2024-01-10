@@ -71,7 +71,8 @@ steps:
       #vsTestVersion: 'toolsInstaller'
       vstestLocationMethod: 'location'
       vstestLocation: 'C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe'
-      publishRunAttachments: false
+      publishRunAttachments: true
   - task: Windows Application Driver@0
     inputs:
       OperationType: 'Stop'
+  
