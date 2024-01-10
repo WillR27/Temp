@@ -13,11 +13,6 @@ steps:
     inputs:
       command: 'custom'
       customCommand: 'install chromedriver --detect_chromedriver_version'
-  - task: CopyFiles@2
-    inputs:
-      SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
-      Contents: '**'
-      TargetFolder: 'C:/Program Files (x86)/MooD/17'
   - task: VisualStudioTestPlatformInstaller@1
     inputs:
       packageFeedSelector: 'nugetOrg'
@@ -57,6 +52,11 @@ steps:
       displaySettings: 'specific'
       width: '1920'
       height: '1080'
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
+      Contents: '**'
+      TargetFolder: 'C:/Program Files (x86)/MooD/17'
   - task: Windows Application Driver@0
     inputs:
       OperationType: 'Start'
