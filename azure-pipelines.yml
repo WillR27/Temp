@@ -9,9 +9,10 @@ steps:
       versionSource: 'spec'
       versionSpec: '20.x'
       checkLatest: true
-  - task: CmdLine@2
+  - task: Npm@1
     inputs:
-      script: 'npm install chromedriver --detect_chromedriver_version'
+      command: 'custom'
+      customCommand: 'install chromedriver --detect_chromedriver_version'
   - task: VisualStudioTestPlatformInstaller@1
     inputs:
       packageFeedSelector: 'nugetOrg'
