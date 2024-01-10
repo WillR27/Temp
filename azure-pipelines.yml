@@ -7,7 +7,7 @@ steps:
   - task: Npm@1
     inputs:
       command: 'custom'
-      customCommand: 'install chromedriver'
+      customCommand: 'install chromedriver --detect_chromedriver_version'
   - task: VisualStudioTestPlatformInstaller@1
     inputs:
       packageFeedSelector: 'nugetOrg'
