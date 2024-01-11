@@ -1,7 +1,7 @@
 trigger: none
 
 schedules:
-- cron: 0 14 20 * 1-5
+- cron: 0 14 25 * 1-5
   displayName: Overnight run
   branches:
     include:
