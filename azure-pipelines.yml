@@ -1,4 +1,8 @@
-trigger: none
+resources:
+  pipelines:
+  - pipeline: Setup Pipeline
+    source: UI Tests - Reset Machine
+    trigger: true
 
 pool:
  name: UITestPoolAzure
