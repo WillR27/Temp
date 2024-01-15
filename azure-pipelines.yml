@@ -42,7 +42,7 @@ steps:
     inputs:
       testSelector: 'testAssemblies'
       testAssemblyVer2: 'C:\Program Files (x86)\MooD\17\Test_UI.dll'
-      testFiltercriteria: 'Name~ActionPanelsButtonCloseWindow'
+      testFiltercriteria: 'Name~DataTables'
       searchFolder: '$(System.DefaultWorkingDirectory)'
       resultsFolder: 'C:\Temp\TestResults'
       uiTests: true
