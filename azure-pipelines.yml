@@ -24,35 +24,7 @@ steps:
       packageFeedSelector: 'nugetOrg'
       versionSelector: 'specificVersion'
       testPlatformVersion: '16.11.0'
-  - task: AzureCLI@2
-    inputs:
-      azureSubscription: 'WR-VS'
-      scriptType: 'ps'
-      scriptLocation: 'inlineScript'
-      inlineScript: |
-        $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-        $tempDirectory = "C:\Temp\Downloads\"
-        Remove-Item -Path $tempDirectory -Force -Recurse -ErrorAction Ignore
-        $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
-        
-        Write-Host Downloading build artifacts
-        az pipelines runs artifact download --artifact-name CPPTestsZip --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-        az pipelines runs artifact download --artifact-name UITestsZip --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-        az pipelines runs artifact download --artifact-name MooD --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-        
-        Write-Host Installing MooD
-        $InstallerFilename = "${tempDirectory}MooD17.006.000_BusinessArchitectSetup.exe"
-        $processStartInfo = new-object "Diagnostics.ProcessStartInfo"
-        $processStartInfo.FileName = $InstallerFilename
-        $processStartInfo.Arguments = "/quiet"
-        $process = [Diagnostics.Process]::Start($processStartInfo)
-        $process.WaitForExit();
-        
-        Write-Host Extracting CppTests
-        Expand-Archive -LiteralPath "${tempDirectory}CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
-        
-        Write-Host Extracting UITests
-        Expand-Archive -LiteralPath "${tempDirectory}UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+  
   - task: ScreenResolutionUtility@1
     inputs:
       displaySettings: 'specific'
