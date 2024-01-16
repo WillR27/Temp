@@ -88,7 +88,7 @@ steps:
                     fileName=$fileName;
                     comment="Log";
                     attachmentType="GeneralAttachment"
-                } | ConvertTo-Json -Compress).Replace('"', '\"') | Out-File "C:\temp\file.json"
+                } | ConvertTo-Json -Compress) | Out-File "C:\temp\file.json"
 
                 az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body '@C:/temp/file.json' --headers $headers
             }
