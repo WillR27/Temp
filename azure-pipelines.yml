@@ -78,7 +78,7 @@ steps:
             $fileName = 'StdOut_' + $value.testCaseTitle + '.log'
             $logFile = 'C:/Temp/TestLogs/' + $fileName
             Write-Host $fileName
-            if (Test-Path $logFile) {
+            if ((Test-Path $logFile) -and ([String]::IsNullOrWhiteSpace((Get-content $logFile)) -eq $false)) {
                 Write-Host $logFile
                 $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
                 $testId = $value.id
