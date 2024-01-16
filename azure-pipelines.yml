@@ -50,6 +50,7 @@ steps:
       vstestLocationMethod: 'location'
       vstestLocation: 'C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe'
       publishRunAttachments: true
+    continueOnError: true
   - task: AzureCLI@2
     inputs:
       azureSubscription: 'WR-VS'
@@ -59,7 +60,7 @@ steps:
         $maxDate = Get-Date -Format "yyyy-MM-dd"
         $minDate = (Get-Date).AddDays(-3).ToString("yyyy-MM-dd")
 
-        $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=26760&api-version=6.0"'
+        $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=$(Build.BuildId)&api-version=6.0"'
         $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url
         $res = $res | ConvertFrom-Json
 
