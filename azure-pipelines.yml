@@ -67,15 +67,19 @@ steps:
         $res = $res | ConvertFrom-Json
 
         $testRunId = $res.value[0].id
+        Write-Host $testRunId
 
         $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs/1000052/results?api-version=6.0"'
         $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
+        Write-Host $res
         $res = $res | ConvertFrom-Json
 
         foreach ($value in $res.value) {
             $fileName = 'StdOut_' + $value.testCaseTitle + '.log'
             $logFile = 'C:/Temp/TestLogs/' + $fileName
+            Write-Host $fileName
             if (Test-Path $logFile) {
+                Write-Host $fileName
                 $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
                 $testId = $value.id
                 $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
