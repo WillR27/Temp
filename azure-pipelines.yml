@@ -57,12 +57,10 @@ steps:
       scriptType: 'ps'
       scriptLocation: 'inlineScript'
       inlineScript: |
-        Start-Sleep -Seconds 60
-
-        $maxDate = Get-Date -Format "yyyy-MM-dd"
+        $maxDate = (Get-Date).AddDays(1).ToString("yyyy-MM-dd")
         $minDate = (Get-Date).AddDays(-3).ToString("yyyy-MM-dd")
 
-        $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=26773&api-version=6.0"'
+        $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=$(Build.BuildId)&api-version=6.0"'
         $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers "Authorization=Bearer $(System.AccessToken)"
         Write-Host $res
         $res = $res | ConvertFrom-Json
