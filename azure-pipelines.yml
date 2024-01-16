@@ -59,16 +59,17 @@ steps:
       inlineScript: |
         $maxDate = (Get-Date).AddDays(1).ToString("yyyy-MM-dd")
         $minDate = (Get-Date).AddDays(-3).ToString("yyyy-MM-dd")
+        $headers = "Authorization=Bearer $(System.AccessToken)"
 
         $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=$(Build.BuildId)&api-version=6.0"'
-        $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers "Authorization=Bearer $(System.AccessToken)"
+        $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
         Write-Host $res
         $res = $res | ConvertFrom-Json
 
         $testRunId = $res.value[0].id
 
         $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs/1000052/results?api-version=6.0"'
-        $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url
+        $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
         $res = $res | ConvertFrom-Json
 
         foreach ($value in $res.value) {
@@ -85,7 +86,7 @@ steps:
                     attachmentType="GeneralAttachment"
                 } | ConvertTo-Json -Compress).Replace('"', '\"')
 
-                az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body $body
+                az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body $body --headers $headers
             }
         }
   - task: Windows Application Driver@0
