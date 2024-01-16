@@ -79,7 +79,7 @@ steps:
             $logFile = 'C:/Temp/TestLogs/' + $fileName
             Write-Host $fileName
             if (Test-Path $logFile) {
-                Write-Host $fileName
+                Write-Host $logFile
                 $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
                 $testId = $value.id
                 $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
