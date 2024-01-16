@@ -70,7 +70,7 @@ steps:
     inputs:
       testSelector: 'testAssemblies'
       testAssemblyVer2: 'C:\Program Files (x86)\MooD\17\Test_UI.dll'
-      #testFiltercriteria: 'Name~DataTables'
+      testFiltercriteria: 'Name~DataTables'
       searchFolder: '$(System.DefaultWorkingDirectory)'
       resultsFolder: 'C:\Temp\TestResults'
       uiTests: true
@@ -78,6 +78,42 @@ steps:
       vstestLocationMethod: 'location'
       vstestLocation: 'C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe'
       publishRunAttachments: true
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'WR-VS'
+      scriptType: 'ps'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        $maxDate = Get-Date -Format "yyyy-MM-dd"
+        $minDate = (Get-Date).AddDays(-3).ToString("yyyy-MM-dd")
+
+        $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=26760&api-version=6.0"'
+        $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url
+        $res = $res | ConvertFrom-Json
+
+        $testRunId = $res.value[0].id
+
+        $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs/1000052/results?api-version=6.0"'
+        $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url
+        $res = $res | ConvertFrom-Json
+
+        foreach ($value in $res.value) {
+            $fileName = 'StdOut_' + $value.testCaseTitle + '.log'
+            $logFile = 'C:/Temp/TestLogs/' + $fileName
+            if (Test-Path $logFile) {
+                $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
+                $testId = $value.id
+                $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
+                $body = (@{
+                    stream=$fileStream;
+                    fileName=$fileName;
+                    comment="Log";
+                    attachmentType="GeneralAttachment"
+                } | ConvertTo-Json -Compress).Replace('"', '\"')
+
+                az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body $body
+            }
+        }
   - task: Windows Application Driver@0
     inputs:
       OperationType: 'Stop'
