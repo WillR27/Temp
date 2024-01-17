@@ -75,7 +75,7 @@ steps:
         $res = $res | ConvertFrom-Json
 
         foreach ($value in $res.value) {
-            $fileName = 'StdOut_' + $value.testCaseTitle + '.log'
+            $fileName = $value.testCaseTitle + '.log'
             $logFile = 'C:/Temp/UiTestsOut/' + $fileName
             Write-Host $fileName
             if ((Test-Path $logFile) -and ([String]::IsNullOrWhiteSpace((Get-content $logFile)) -eq $false)) {
