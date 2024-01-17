@@ -39,6 +39,8 @@ steps:
     inputs:
       OperationType: 'Start'
   - task: VSTest@3
+    env:
+      CAPTUREOVERNIGHTOUTPUT: yes
     inputs:
       testSelector: 'testAssemblies'
       testAssemblyVer2: 'C:\Program Files (x86)\MooD\17\Test_UI.dll'
