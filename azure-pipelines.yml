@@ -92,6 +92,23 @@ steps:
 
                 az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body '@C:/temp/file.json' --headers $headers
             }
+            $fileName = $value.testCaseTitle + '.png'
+            $logFile = 'C:/Temp/UiTestsOut/' + $fileName
+            Write-Host $fileName
+            if ((Test-Path $logFile) -and ([String]::IsNullOrWhiteSpace((Get-content $logFile)) -eq $false)) {
+                Write-Host $logFile
+                $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
+                $testId = $value.id
+                $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
+                $body = (@{
+                    stream=$fileStream;
+                    fileName=$fileName;
+                    comment="Screenshot";
+                    attachmentType="GeneralAttachment"
+                } | ConvertTo-Json -Compress) | Out-File "C:\temp\file.json"
+
+                az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body '@C:/temp/file.json' --headers $headers
+            }
         }
   - task: Windows Application Driver@0
     inputs:
