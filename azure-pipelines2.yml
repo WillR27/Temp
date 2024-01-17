@@ -1,12 +1,12 @@
 trigger: none
 
-#schedules:
-#- cron: '0 22 * * 1-5'
-#  always: true
-#  displayName: Overnight run
-#  branches:
-#    include:
-#    - main
+schedules:
+- cron: '0 22 * * 1-5'
+  always: true
+  displayName: Overnight run
+  branches:
+    include:
+    - main
 
 pool:
   vmImage: 'windows-latest'
