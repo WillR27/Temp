@@ -76,7 +76,7 @@ jobs:
         inputs:
           testSelector: 'testAssemblies'
           testAssemblyVer2: 'C:\Program Files (x86)\MooD\17\Test_UI.dll'
-          #testFiltercriteria: 'Name~Datasheet'
+          testFiltercriteria: 'Name~Ma'
           searchFolder: '$(System.DefaultWorkingDirectory)'
           resultsFolder: 'C:\Temp\TestResults'
           uiTests: true
@@ -86,6 +86,7 @@ jobs:
           publishRunAttachments: true
         continueOnError: true
       - task: AzureCLI@2
+        enabled: false
         inputs:
           azureSubscription: 'WR-VS'
           scriptType: 'ps'
