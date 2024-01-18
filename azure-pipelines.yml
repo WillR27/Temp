@@ -28,6 +28,7 @@ jobs:
           versionSelector: 'specificVersion'
           testPlatformVersion: '16.11.0'
       - task: AzureCLI@2
+        enabled: false
         inputs:
           azureSubscription: 'WR-VS'
           scriptType: 'ps'
