@@ -9,138 +9,141 @@ resources:
 pool:
  name: UITestPoolAzure
 
-steps:
-  - task: NodeTool@0
-    inputs:
-      versionSource: 'spec'
-      versionSpec: '20.x'
-      checkLatest: true
-  - task: Npm@1
-    inputs:
-      command: 'custom'
-      customCommand: 'install chromedriver --detect_chromedriver_version'
-  - task: VisualStudioTestPlatformInstaller@1
-    inputs:
-      packageFeedSelector: 'nugetOrg'
-      versionSelector: 'specificVersion'
-      testPlatformVersion: '16.11.0'
-  - task: AzureCLI@2
-    inputs:
-      azureSubscription: 'WR-VS'
-      scriptType: 'ps'
-      scriptLocation: 'inlineScript'
-      inlineScript: |
-        $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-        $tempDirectory = "C:\Temp\Downloads\"
-        Remove-Item -Path $tempDirectory -Force -Recurse -ErrorAction Ignore
-        $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
-        
-        Write-Host Downloading build artifacts
-        az pipelines runs artifact download --artifact-name CPPTestsZip --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-        az pipelines runs artifact download --artifact-name UITestsZip --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-        az pipelines runs artifact download --artifact-name MooD --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-        
-        Write-Host Installing MooD
-        $InstallerFilename = "${tempDirectory}MooD17.006.000_BusinessArchitectSetup.exe"
-        $processStartInfo = new-object "Diagnostics.ProcessStartInfo"
-        $processStartInfo.FileName = $InstallerFilename
-        $processStartInfo.Arguments = "/quiet"
-        $process = [Diagnostics.Process]::Start($processStartInfo)
-        $process.WaitForExit();
-        
-        Write-Host Extracting CppTests
-        Expand-Archive -LiteralPath "${tempDirectory}CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
-        
-        Write-Host Extracting UITests
-        Expand-Archive -LiteralPath "${tempDirectory}UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
-  - task: ScreenResolutionUtility@1
-    inputs:
-      displaySettings: 'specific'
-      width: '1920'
-      height: '1080'
-  - task: CopyFiles@2
-    inputs:
-      SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
-      Contents: '**'
-      TargetFolder: 'C:/Program Files (x86)/MooD/17'
-  - task: Windows Application Driver@0
-    inputs:
-      OperationType: 'Start'
-  - task: VSTest@3
-    env:
-      CAPTUREOVERNIGHTOUTPUT: yes
-    inputs:
-      testSelector: 'testAssemblies'
-      testAssemblyVer2: 'C:\Program Files (x86)\MooD\17\Test_UI.dll'
-      #testFiltercriteria: 'Name~Datasheet'
-      searchFolder: '$(System.DefaultWorkingDirectory)'
-      resultsFolder: 'C:\Temp\TestResults'
-      uiTests: true
-      #vsTestVersion: 'toolsInstaller'
-      vstestLocationMethod: 'location'
-      vstestLocation: 'C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe'
-      publishRunAttachments: true
-    continueOnError: true
-  - task: AzureCLI@2
-    inputs:
-      azureSubscription: 'WR-VS'
-      scriptType: 'ps'
-      scriptLocation: 'inlineScript'
-      inlineScript: |
-        $maxDate = (Get-Date).AddDays(1).ToString("yyyy-MM-dd")
-        $minDate = (Get-Date).AddDays(-3).ToString("yyyy-MM-dd")
-        $headers = "Authorization=Bearer $(System.AccessToken)"
+jobs:
+  - job: Test
+    timeoutInMinutes: 180
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSource: 'spec'
+          versionSpec: '20.x'
+          checkLatest: true
+      - task: Npm@1
+        inputs:
+          command: 'custom'
+          customCommand: 'install chromedriver --detect_chromedriver_version'
+      - task: VisualStudioTestPlatformInstaller@1
+        inputs:
+          packageFeedSelector: 'nugetOrg'
+          versionSelector: 'specificVersion'
+          testPlatformVersion: '16.11.0'
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: 'WR-VS'
+          scriptType: 'ps'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
+            $tempDirectory = "C:\Temp\Downloads\"
+            Remove-Item -Path $tempDirectory -Force -Recurse -ErrorAction Ignore
+            $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
+            
+            Write-Host Downloading build artifacts
+            az pipelines runs artifact download --artifact-name CPPTestsZip --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
+            az pipelines runs artifact download --artifact-name UITestsZip --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
+            az pipelines runs artifact download --artifact-name MooD --path $tempDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
+            
+            Write-Host Installing MooD
+            $InstallerFilename = "${tempDirectory}MooD17.006.000_BusinessArchitectSetup.exe"
+            $processStartInfo = new-object "Diagnostics.ProcessStartInfo"
+            $processStartInfo.FileName = $InstallerFilename
+            $processStartInfo.Arguments = "/quiet"
+            $process = [Diagnostics.Process]::Start($processStartInfo)
+            $process.WaitForExit();
+            
+            Write-Host Extracting CppTests
+            Expand-Archive -LiteralPath "${tempDirectory}CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+            
+            Write-Host Extracting UITests
+            Expand-Archive -LiteralPath "${tempDirectory}UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+      - task: ScreenResolutionUtility@1
+        inputs:
+          displaySettings: 'specific'
+          width: '1920'
+          height: '1080'
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
+          Contents: '**'
+          TargetFolder: 'C:/Program Files (x86)/MooD/17'
+      - task: Windows Application Driver@0
+        inputs:
+          OperationType: 'Start'
+      - task: VSTest@3
+        env:
+          CAPTUREOVERNIGHTOUTPUT: yes
+        inputs:
+          testSelector: 'testAssemblies'
+          testAssemblyVer2: 'C:\Program Files (x86)\MooD\17\Test_UI.dll'
+          #testFiltercriteria: 'Name~Datasheet'
+          searchFolder: '$(System.DefaultWorkingDirectory)'
+          resultsFolder: 'C:\Temp\TestResults'
+          uiTests: true
+          #vsTestVersion: 'toolsInstaller'
+          vstestLocationMethod: 'location'
+          vstestLocation: 'C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe'
+          publishRunAttachments: true
+        continueOnError: true
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: 'WR-VS'
+          scriptType: 'ps'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            $maxDate = (Get-Date).AddDays(1).ToString("yyyy-MM-dd")
+            $minDate = (Get-Date).AddDays(-3).ToString("yyyy-MM-dd")
+            $headers = "Authorization=Bearer $(System.AccessToken)"
 
-        $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=$(Build.BuildId)&api-version=6.0"'
-        $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
-        Write-Host $res
-        $res = $res | ConvertFrom-Json
+            $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=$(Build.BuildId)&api-version=6.0"'
+            $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
+            Write-Host $res
+            $res = $res | ConvertFrom-Json
 
-        $testRunId = $res.value[0].id
-        Write-Host $testRunId
+            $testRunId = $res.value[0].id
+            Write-Host $testRunId
 
-        $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs/"'+"$testRunId"+'"/results?api-version=6.0"'
-        $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
-        Write-Host $res
-        $res = $res | ConvertFrom-Json
+            $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs/"'+"$testRunId"+'"/results?api-version=6.0"'
+            $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
+            Write-Host $res
+            $res = $res | ConvertFrom-Json
 
-        foreach ($value in $res.value) {
-            $fileName = $value.testCaseTitle + '.log'
-            $logFile = 'C:/Temp/UiTestsOut/' + $fileName
-            Write-Host $fileName
-            if ((Test-Path $logFile) -and ([String]::IsNullOrWhiteSpace((Get-content $logFile)) -eq $false)) {
-                Write-Host $logFile
-                $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
-                $testId = $value.id
-                $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
-                $body = (@{
-                    stream=$fileStream;
-                    fileName=$fileName;
-                    comment="Log";
-                    attachmentType="GeneralAttachment"
-                } | ConvertTo-Json -Compress) | Out-File "C:\temp\file.json"
+            foreach ($value in $res.value) {
+                $fileName = $value.testCaseTitle + '.log'
+                $logFile = 'C:/Temp/UiTestsOut/' + $fileName
+                Write-Host $fileName
+                if ((Test-Path $logFile) -and ([String]::IsNullOrWhiteSpace((Get-content $logFile)) -eq $false)) {
+                    Write-Host $logFile
+                    $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
+                    $testId = $value.id
+                    $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
+                    $body = (@{
+                        stream=$fileStream;
+                        fileName=$fileName;
+                        comment="Log";
+                        attachmentType="GeneralAttachment"
+                    } | ConvertTo-Json -Compress) | Out-File "C:\temp\file.json"
 
-                az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body '@C:/temp/file.json' --headers $headers
+                    az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body '@C:/temp/file.json' --headers $headers
+                }
+                $fileName = $value.testCaseTitle + '.png'
+                $logFile = 'C:/Temp/UiTestsOut/' + $fileName
+                Write-Host $fileName
+                if ((Test-Path $logFile) -and ([String]::IsNullOrWhiteSpace((Get-content $logFile)) -eq $false)) {
+                    Write-Host $logFile
+                    $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
+                    $testId = $value.id
+                    $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
+                    $body = (@{
+                        stream=$fileStream;
+                        fileName=$fileName;
+                        comment="Screenshot";
+                        attachmentType="GeneralAttachment"
+                    } | ConvertTo-Json -Compress) | Out-File "C:\temp\file.json"
+
+                    az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body '@C:/temp/file.json' --headers $headers
+                }
             }
-            $fileName = $value.testCaseTitle + '.png'
-            $logFile = 'C:/Temp/UiTestsOut/' + $fileName
-            Write-Host $fileName
-            if ((Test-Path $logFile) -and ([String]::IsNullOrWhiteSpace((Get-content $logFile)) -eq $false)) {
-                Write-Host $logFile
-                $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
-                $testId = $value.id
-                $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
-                $body = (@{
-                    stream=$fileStream;
-                    fileName=$fileName;
-                    comment="Screenshot";
-                    attachmentType="GeneralAttachment"
-                } | ConvertTo-Json -Compress) | Out-File "C:\temp\file.json"
-
-                az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body '@C:/temp/file.json' --headers $headers
-            }
-        }
-  - task: Windows Application Driver@0
-    inputs:
-      OperationType: 'Stop'
-  
+      - task: Windows Application Driver@0
+        inputs:
+          OperationType: 'Stop'
+      
