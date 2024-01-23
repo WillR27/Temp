@@ -28,4 +28,4 @@ jobs:
 
             Out-File -FilePath .\script.ps1 -InputObject $script
 
-            az vm run-command create --resource-group "test-resource-group" --script "@.\script.ps1" --async-execution true --timeout-in-seconds 60 --run-command-name "myRunCommand" --vm-name "par-test-1" --run-as-password "Ts0rg123_Ts0rg123" --run-as-user "testuser"
+            az vm run-command create --resource-group "test-resource-group" --script "@.\script.ps1" --async-execution true --timeout-in-seconds 120 --run-command-name "myRunCommand" --vm-name "par-test-1" --run-as-password "Ts0rg123_Ts0rg123" --run-as-user "testuser"
