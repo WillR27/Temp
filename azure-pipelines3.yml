@@ -18,4 +18,14 @@ jobs:
           scriptType: 'ps'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az vm run-command create --resource-group "test-resource-group" --script "@C:\Users\Will\Desktop\script.ps1" --timeout-in-seconds 600 --run-command-name "myRunCommand" --vm-name "par-test-1" --run-as-password "Ts0rg123_Ts0rg123" --run-as-user "testuser"
+            $script = @"
+            Start-ScheduledTask -TaskName "Run Tests"
+            do{
+                $state = Get-ScheduledTask -TaskName "Run Tests"|select -expand State
+                Start-Sleep -Milliseconds 500
+            } while($state -eq "Running")
+            "@
+
+            Out-File -FilePath .\script.ps1 -InputObject $script
+
+            az vm run-command create --resource-group "test-resource-group" --script "@.\script.ps1" --timeout-in-seconds 600 --run-command-name "myRunCommand" --vm-name "par-test-1" --run-as-password "Ts0rg123_Ts0rg123" --run-as-user "testuser"
