@@ -6,13 +6,16 @@
 trigger: none
 
 pool:
-  vmImage: ubuntu-latest
+   name: UITestPoolAzure
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+jobs:
+  - job: Test
+    timeoutInMinutes: 180
+    steps:
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: 'WR-VS'
+          scriptType: 'ps'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az vm run-command create --resource-group "test-resource-group" --script "@C:\Users\Will\Desktop\script.ps1" --timeout-in-seconds 600 --run-command-name "myRunCommand" --vm-name "par-test-1" --run-as-password "Ts0rg123_Ts0rg123" --run-as-user "testuser"
