@@ -33,6 +33,11 @@ jobs:
 
             #Start-Sleep -Seconds 60
 
+            Write-Host Trusting ips
+            $ipsStr = $ips -join ','
+            $ipsStr = '"' + $ipsStr + '"'
+            winrm set winrm/config/client "@{TrustedHosts=$ipsStr}"
+
             Write-Host Running test
             Invoke-Command -ComputerName $ips -ScriptBlock {
               Start-ScheduledTask -TaskName "Run Tests"
