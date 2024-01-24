@@ -28,7 +28,7 @@ jobs:
             $ips = [System.Collections.ArrayList]@()
             1..$numMachines | ForEach-Object { 
                 $ip = az vm list-ip-addresses --resource-group test-resource-group --name par-test-$_ --query [0].virtualMachine.network.privateIpAddresses[0] 
-                $ips.Add($ip)
+                $ips.Add($ip.Replace('"', ''))
             }
 
             #Start-Sleep -Seconds 60
