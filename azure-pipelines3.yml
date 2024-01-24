@@ -17,13 +17,21 @@ jobs:
           scriptType: 'pscore'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            "1","2" | ForEach-Object -Parallel { 
+            $numMachines = 2
+
+            1..$numMachines | ForEach-Object -Parallel { 
               az vm start --resource-group test-resource-group --name par-test-$_ 
             } -ThrottleLimit 4
             
+            $ips = [System.Collections.ArrayList]@()
+            1..$numMachines | ForEach-Object { 
+                $ip = az vm list-ip-addresses --resource-group test-resource-group --name par-test-$_ --query [0].virtualMachine.network.privateIpAddresses[0] 
+                $ips.Add($ip)
+            }
+
             Start-Sleep -Seconds 60
 
-            Invoke-Command -ComputerName @('10.0.0.6','10.0.0.7') -ScriptBlock {
+            Invoke-Command -ComputerName $ips -ScriptBlock {
               Start-ScheduledTask -TaskName "Run Tests"
               do{
                   $state = Get-ScheduledTask -TaskName "Run Tests"|select -expand State
