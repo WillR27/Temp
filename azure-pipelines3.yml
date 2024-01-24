@@ -25,3 +25,9 @@ jobs:
                   Start-Sleep -Milliseconds 500
               } while($state -eq "Running")
             }
+      - task: PublishTestResults@2
+        inputs:
+          testResultsFormat: 'VSTest'
+          testResultsFiles: '*.trx'
+          searchFolder: 'C:/Shared/'
+          mergeTestResults: true
