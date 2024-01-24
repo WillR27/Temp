@@ -18,4 +18,4 @@ jobs:
           scriptType: 'pscore'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            $PSVersionTable
+            "1","2" | ForEach-Object -Parallel { az vm start --resource-group test-resource-group --name par-test-$_ } -ThrottleLimit 4
