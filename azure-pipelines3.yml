@@ -15,7 +15,7 @@ jobs:
       - task: AzureCLI@2
         inputs:
           azureSubscription: 'WR-VS'
-          scriptType: 'ps'
+          scriptType: 'pscore'
           scriptLocation: 'inlineScript'
           inlineScript: |
             "1","2" | ForEach-Object -Parallel { 
