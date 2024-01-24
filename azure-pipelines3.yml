@@ -19,10 +19,12 @@ jobs:
           inlineScript: |
             $numMachines = 2
 
+            Write-Host Starting machines
             1..$numMachines | ForEach-Object -Parallel { 
               az vm start --resource-group test-resource-group --name par-test-$_ 
             } -ThrottleLimit 4
             
+            Write-Host Getting ips
             $ips = [System.Collections.ArrayList]@()
             1..$numMachines | ForEach-Object { 
                 $ip = az vm list-ip-addresses --resource-group test-resource-group --name par-test-$_ --query [0].virtualMachine.network.privateIpAddresses[0] 
@@ -31,6 +33,7 @@ jobs:
 
             #Start-Sleep -Seconds 60
 
+            Write-Host Running test
             Invoke-Command -ComputerName $ips -ScriptBlock {
               Start-ScheduledTask -TaskName "Run Tests"
               do{
