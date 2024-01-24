@@ -29,7 +29,7 @@ jobs:
                 $ips.Add($ip)
             }
 
-            Start-Sleep -Seconds 60
+            #Start-Sleep -Seconds 60
 
             Invoke-Command -ComputerName $ips -ScriptBlock {
               Start-ScheduledTask -TaskName "Run Tests"
