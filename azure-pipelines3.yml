@@ -18,4 +18,4 @@ jobs:
           scriptType: 'ps'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az vm start --resource-group test-resource-group --name par-test-1
+            az vm stop --resource-group test-resource-group --name par-test-1
