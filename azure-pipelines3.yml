@@ -15,7 +15,7 @@ jobs:
       - task: AzureCLI@2
         inputs:
           azureSubscription: 'WR-VS'
-          scriptType: 'ps'
+          scriptType: 'pscore'
           scriptLocation: 'inlineScript'
           inlineScript: |
             $PSVersionTable
