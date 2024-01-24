@@ -10,7 +10,6 @@ pool:
 
 jobs:
   - job: Test
-    timeoutInMinutes: 180
     steps:
       - task: AzureCLI@2
         inputs:
@@ -22,6 +21,8 @@ jobs:
               az vm start --resource-group test-resource-group --name par-test-$_ 
             } -ThrottleLimit 4
             
+            Start-Sleep -Seconds 30
+
             Invoke-Command -ComputerName @('10.0.0.6','10.0.0.7') -ScriptBlock {
               Start-ScheduledTask -TaskName "Run Tests"
               do{
