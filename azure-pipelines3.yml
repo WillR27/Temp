@@ -18,7 +18,18 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-            $targetDirectory = "C:\Shared\Build\"
+            $sharedDirectory = "C:\Shared"
+
+            Write-Host Deleting old files
+            Get-ChildItem -Path $sharedDirectory | ForEach-Object -Process { 
+              if($_.attributes -eq "Directory") {
+                Remove-Item -Path $_.FullName -Recurse -Force
+              } else {
+                Remove-Item -Path $_.FullName -Force
+              }
+            }
+            
+            $targetDirectory = "$sharedDirectory\Build"
             Remove-Item -Path $targetDirectory -Force -Recurse -ErrorAction Ignore
             $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
             
@@ -27,3 +38,5 @@ jobs:
             az pipelines runs artifact download --artifact-name UITestsZip --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
             az pipelines runs artifact download --artifact-name MooD --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
             
+            Write-Host Extracting UITests
+            Expand-Archive -LiteralPath "${targetDirectory}\UITests.zip" -DestinationPath "${targetDirectory}\UITests" -Force
