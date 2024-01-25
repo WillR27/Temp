@@ -24,10 +24,6 @@ jobs:
             $uitestsDirectory = "${targetDirectory}\UITests"
             $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
 
-            Write-Host Creating VMs
-            1..$numMachines | ForEach-Object -Parallel { 
-              az vm create --resource-group test-resource-group --name vm-ui-tests-$_ --image "/subscriptions/1abd2ed2-8cfd-487a-8b4a-1feeb4498ccd/resourceGroups/test-resource-group/providers/Microsoft.Compute/galleries/testGallery/images/testDefinition2" --specialized --license-type Windows_Client --admin-password Ts0rg123_Ts0rg123 --admin-username testuser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""'
-            } -ThrottleLimit $numMachines
 
             Write-Host Getting ips
             $ips = [System.Collections.ArrayList]@()
@@ -35,8 +31,6 @@ jobs:
                 $ip = az vm list-ip-addresses --resource-group test-resource-group --name vm-ui-tests-$_ --query [0].virtualMachine.network.privateIpAddresses[0] 
                 $ips.Add($ip.Replace('"', ''))
             }
-
-            Start-Sleep -Seconds 300
 
             Write-Host Trusting ips
             $ipsStr = $ips -join ','
@@ -46,7 +40,7 @@ jobs:
             Write-Host Installing MooD
             Invoke-Command -ComputerName $ips -ScriptBlock {
               Write-Host Installing MooD
-              $InstallerFilename = "${targetDirectory}MooD17.006.000_BusinessArchitectSetup.exe"
+              $InstallerFilename = "${targetDirectory}\MooD17.006.000_BusinessArchitectSetup.exe"
               $processStartInfo = new-object "Diagnostics.ProcessStartInfo"
               $processStartInfo.FileName = $InstallerFilename
               $processStartInfo.Arguments = "/quiet"
@@ -54,10 +48,10 @@ jobs:
               $process.WaitForExit();
               
               Write-Host Extracting CppTests
-              Expand-Archive -LiteralPath "${targetDirectory}CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+              Expand-Archive -LiteralPath "${targetDirectory}\CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
               
               Write-Host Extracting UITests
-              Expand-Archive -LiteralPath "${targetDirectory}UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+              Expand-Archive -LiteralPath "${targetDirectory}\UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
             }
 
             Write-Host Running test
