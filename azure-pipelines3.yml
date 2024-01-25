@@ -21,6 +21,7 @@ jobs:
             $numMachines = 4
             $sharedDirectory = "C:\Shared"
             $targetDirectory = "$sharedDirectory\Build"
+            $targetDirectory2 = "\\10.0.0.4\Shared\Build"
             $uitestsDirectory = "${targetDirectory}\UITests"
             $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
 
@@ -40,7 +41,7 @@ jobs:
             Write-Host Installing MooD
             Invoke-Command -ComputerName $ips -ScriptBlock {
               Write-Host Installing MooD
-              $InstallerFilename = "${targetDirectory}\MooD17.006.000_BusinessArchitectSetup.exe"
+              $InstallerFilename = "${targetDirectory2}\MooD17.006.000_BusinessArchitectSetup.exe"
               $processStartInfo = new-object "Diagnostics.ProcessStartInfo"
               $processStartInfo.FileName = $InstallerFilename
               $processStartInfo.Arguments = "/quiet"
@@ -48,10 +49,10 @@ jobs:
               $process.WaitForExit();
               
               Write-Host Extracting CppTests
-              Expand-Archive -LiteralPath "${targetDirectory}\CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+              Expand-Archive -LiteralPath "${targetDirectory2}\CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
               
               Write-Host Extracting UITests
-              Expand-Archive -LiteralPath "${targetDirectory}\UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+              Expand-Archive -LiteralPath "${targetDirectory2}\UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
             }
 
             Write-Host Running test
