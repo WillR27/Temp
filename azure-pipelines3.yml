@@ -48,11 +48,7 @@ jobs:
               $process = [Diagnostics.Process]::Start($processStartInfo)
               $process.WaitForExit();
               
-              Write-Host Extracting CppTests
-              Expand-Archive -LiteralPath "${targetDirectory2}\CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
               
-              Write-Host Extracting UITests
-              Expand-Archive -LiteralPath "${targetDirectory2}\UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
             }
 
             Write-Host Running test
