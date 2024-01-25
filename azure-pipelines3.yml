@@ -24,7 +24,7 @@ jobs:
             $uitestsDirectory = "${targetDirectory}\UITests"
             $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
 
-
+            
             Write-Host Creating VMs
             1..$numMachines | ForEach-Object -Parallel { 
               az vm create --resource-group test-resource-group --name vm-ui-tests-$_ --image "/subscriptions/1abd2ed2-8cfd-487a-8b4a-1feeb4498ccd/resourceGroups/test-resource-group/providers/Microsoft.Compute/galleries/testGallery/images/testDefinition2" --specialized --license-type Windows_Client --admin-password Ts0rg123_Ts0rg123 --admin-username testuser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""'
@@ -37,14 +37,14 @@ jobs:
                 $ips.Add($ip.Replace('"', ''))
             }
 
-            #Start-Sleep -Seconds 60
+            Start-Sleep -Seconds 300
 
             Write-Host Trusting ips
             $ipsStr = $ips -join ','
             $ipsStr = '"' + $ipsStr + '"'
             winrm set winrm/config/client "@{TrustedHosts=$ipsStr}"
 
-            Write-Host Running test
+            Write-Host Installing MooD
             Invoke-Command -ComputerName $ips -ScriptBlock {
               Write-Host Installing MooD
               $InstallerFilename = "${targetDirectory}MooD17.006.000_BusinessArchitectSetup.exe"
