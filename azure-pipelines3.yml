@@ -36,7 +36,7 @@ jobs:
                 $ips.Add($ip.Replace('"', ''))
             }
 
-            Start-Sleep -Seconds 120
+            Start-Sleep -Seconds 300
 
             Write-Host Trusting ips
             $ipsStr = $ips -join ','
