@@ -17,7 +17,7 @@ jobs:
           scriptType: 'pscore'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            $numMachines = 2
+            $numMachines = 3
 
             Write-Host Starting machines
             1..$numMachines | ForEach-Object -Parallel { 
