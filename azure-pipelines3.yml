@@ -17,38 +17,13 @@ jobs:
           scriptType: 'pscore'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            $numMachines = 3
-
-            Write-Host Starting machines
-            1..$numMachines | ForEach-Object -Parallel { 
-              az vm start --resource-group test-resource-group --name par-test-$_ 
-            } -ThrottleLimit 4
+            $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
+            $targetDirectory = "C:\Shared\Build\"
+            Remove-Item -Path $targetDirectory -Force -Recurse -ErrorAction Ignore
+            $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
             
-            Write-Host Getting ips
-            $ips = [System.Collections.ArrayList]@()
-            1..$numMachines | ForEach-Object { 
-                $ip = az vm list-ip-addresses --resource-group test-resource-group --name par-test-$_ --query [0].virtualMachine.network.privateIpAddresses[0] 
-                $ips.Add($ip.Replace('"', ''))
-            }
-
-            #Start-Sleep -Seconds 60
-
-            Write-Host Trusting ips
-            $ipsStr = $ips -join ','
-            $ipsStr = '"' + $ipsStr + '"'
-            winrm set winrm/config/client "@{TrustedHosts=$ipsStr}"
-
-            Write-Host Running test
-            Invoke-Command -ComputerName $ips -ScriptBlock {
-              Start-ScheduledTask -TaskName "Run Tests"
-              do{
-                  $state = Get-ScheduledTask -TaskName "Run Tests"|select -expand State
-                  Start-Sleep -Milliseconds 500
-              } while($state -eq "Running")
-            }
-      - task: PublishTestResults@2
-        inputs:
-          testResultsFormat: 'VSTest'
-          testResultsFiles: '*.trx'
-          searchFolder: 'C:/Shared/'
-          mergeTestResults: true
+            Write-Host Downloading build artifacts
+            az pipelines runs artifact download --artifact-name CPPTestsZip --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
+            az pipelines runs artifact download --artifact-name UITestsZip --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
+            az pipelines runs artifact download --artifact-name MooD --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
+            
