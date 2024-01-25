@@ -46,6 +46,7 @@ jobs:
 
             Write-Host Listing test names
             & $vstest "${uitestsDirectory}\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${uitestsDirectory}\TestNames.txt"
+            $tests = Get-Content "${uitestsDirectory}\TestNames.txt"
 
             Write-Host Splitting test names per machine
             $splitTests = @($null) * $numMachines
