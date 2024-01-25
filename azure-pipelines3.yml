@@ -45,4 +45,4 @@ jobs:
             Expand-Archive -LiteralPath "${targetDirectory}\UITests.zip" -DestinationPath $uitestsDirectory -Force
 
             Write-Host Listing test names
-            $vstest "${uitestsDirectory}\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${uitestsDirectory}TestNames.txt"
+            & $vstest "${uitestsDirectory}\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${uitestsDirectory}\TestNames.txt"
