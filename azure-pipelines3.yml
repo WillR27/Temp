@@ -41,7 +41,7 @@ jobs:
             Write-Host Installing MooD
             Invoke-Command -ComputerName $ips -ScriptBlock {
               Write-Host Installing MooD
-              $InstallerFilename = "${targetDirectory2}\MooD17.006.000_BusinessArchitectSetup.exe"
+              $InstallerFilename = "\\10.0.0.4\Shared\Build\MooD17.006.000_BusinessArchitectSetup.exe"
               $processStartInfo = new-object "Diagnostics.ProcessStartInfo"
               $processStartInfo.FileName = $InstallerFilename
               $processStartInfo.Arguments = "/quiet"
