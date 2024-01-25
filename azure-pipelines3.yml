@@ -18,7 +18,11 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
+            $numMachines = 3
             $sharedDirectory = "C:\Shared"
+            $targetDirectory = "$sharedDirectory\Build"
+            $uitestsDirectory = "${targetDirectory}\UITests"
+            $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
 
             Write-Host Deleting old files
             Get-ChildItem -Path $sharedDirectory | ForEach-Object -Process { 
@@ -29,7 +33,6 @@ jobs:
               }
             }
             
-            $targetDirectory = "$sharedDirectory\Build"
             Remove-Item -Path $targetDirectory -Force -Recurse -ErrorAction Ignore
             $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
             
@@ -38,5 +41,8 @@ jobs:
             az pipelines runs artifact download --artifact-name UITestsZip --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
             az pipelines runs artifact download --artifact-name MooD --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
             
-            Write-Host Extracting UITests
-            Expand-Archive -LiteralPath "${targetDirectory}\UITests.zip" -DestinationPath "${targetDirectory}\UITests" -Force
+            Write-Host Extracting UITests locally
+            Expand-Archive -LiteralPath "${targetDirectory}\UITests.zip" -DestinationPath $uitestsDirectory -Force
+
+            Write-Host Listing test names
+            $vstest "${uitestsDirectory}\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${uitestsDirectory}TestNames.txt"
