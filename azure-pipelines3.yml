@@ -25,29 +25,6 @@ jobs:
             $uitestsDirectory = "${targetDirectory}\UITests"
             $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
 
-            Write-Host Deleting old files
-            Get-ChildItem -Path $sharedDirectory | ForEach-Object -Process { 
-              if($_.attributes -eq "Directory") {
-                Remove-Item -Path $_.FullName -Recurse -Force
-              } else {
-                Remove-Item -Path $_.FullName -Force
-              }
-            }
-            
-            Remove-Item -Path $targetDirectory -Force -Recurse -ErrorAction Ignore
-            $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
-            
-            Write-Host Downloading build artifacts
-            az pipelines runs artifact download --artifact-name CPPTestsZip --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-            az pipelines runs artifact download --artifact-name UITestsZip --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-            az pipelines runs artifact download --artifact-name MooD --path $targetDirectory --run-id $buildId --org https://dev.azure.com/MooDPlatform/ --project MooD
-            
-            Write-Host Extracting UITests locally
-            Expand-Archive -LiteralPath "${targetDirectory}\UITests.zip" -DestinationPath $uitestsDirectory -Force
-
-            Write-Host Listing test names
-            & $vstest "${uitestsDirectory}\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${uitestsDirectory}\TestNames.txt"
-            $tests = Get-Content "${uitestsDirectory}\TestNames.txt"
 
             Write-Host Splitting test names per machine
             $splitTests = @($null) * $numMachines
@@ -55,10 +32,6 @@ jobs:
             0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
             0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
 
-            Write-Host Creating VMs
-            1..$numMachines | ForEach-Object -Parallel { 
-              az vm create --resource-group test-resource-group --name vm-ui-tests-$_ --image "/subscriptions/1abd2ed2-8cfd-487a-8b4a-1feeb4498ccd/resourceGroups/test-resource-group/providers/Microsoft.Compute/galleries/testGallery/images/testDefinition2" --specialized --license-type Windows_Client --admin-password Ts0rg123_Ts0rg123 --admin-username testuser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""'
-            } -ThrottleLimit $numMachines
 
             Write-Host Getting ips
             $ips = [System.Collections.ArrayList]@()
@@ -67,37 +40,52 @@ jobs:
                 $ips.Add($ip.Replace('"', ''))
             }
 
-            Start-Sleep -Seconds 180
-
             Write-Host Trusting ips
             $ipsStr = $ips -join ','
             $ipsStr = '"' + $ipsStr + '"'
             winrm set winrm/config/client "@{TrustedHosts=$ipsStr}"
 
+            $script = @"
             Write-Host Installing MooD
-            Invoke-Command -ComputerName $ips -ScriptBlock {
-              Write-Host Installing MooD
-              $InstallerFilename = "\\10.0.0.4\Shared\Build\MooD17.006.000_BusinessArchitectSetup.exe"
-              $processStartInfo = new-object "Diagnostics.ProcessStartInfo"
-              $processStartInfo.FileName = $InstallerFilename
-              $processStartInfo.Arguments = "/quiet"
-              $process = [Diagnostics.Process]::Start($processStartInfo)
-              $process.WaitForExit();
-              
-              Write-Host Extracting CppTests
-              Expand-Archive -LiteralPath "\\10.0.0.4\Shared\Build\CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
-              
-              Write-Host Extracting UITests
-              Expand-Archive -LiteralPath "\\10.0.0.4\Shared\Build\UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
-            }
+            Copy-item -Path "\\10.0.0.4\Shared\Build" -Destination "C:\Temp\Build" -Recurse
 
-            Write-Host Running test
-            Invoke-Command -ComputerName $ips -ScriptBlock {
-              Start-ScheduledTask -TaskName "Run Tests"
-              do{
-                  $state = Get-ScheduledTask -TaskName "Run Tests"|select -expand State
-                  Start-Sleep -Milliseconds 500
-              } while($state -eq "Running")
+            `$installerFilename = "C:\Temp\Build\MooD17.006.000_BusinessArchitectSetup.exe"
+            `$processStartInfo = new-object "Diagnostics.ProcessStartInfo"
+            `$processStartInfo.FileName = `$installerFilename
+            `$processStartInfo.Arguments = "/quiet"
+            `$process = [Diagnostics.Process]::Start(`$processStartInfo)
+            `$process.WaitForExit();
+                          
+            Write-Host Extracting CppTests
+            Expand-Archive -LiteralPath "C:\Temp\Build\CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+                          
+            Write-Host Extracting UITests
+            Expand-Archive -LiteralPath "C:\Temp\Build\UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+
+            Write-Host Installing licence
+            [microsoft.win32.registry]::SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\MooD International\Licence\17.0", "licencepath", "C:\Temp\Build\Internallicence.xml")
+
+            Write-Host Creating rep
+            & "C:\Program Files (x86)\MooD\17\MooDRepositoryManager.com" addserver /server localhost 
+            & "C:\Program Files (x86)\MooD\17\MooDRepositoryManager.com" create /server "localhost" /name "17Test1a"
+
+            Write-Host Running tests
+            "@
+
+            for ($i = 0; $i -lt $numMachines; $i++) {
+                Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
+                    Out-File -FilePath C:\Users\testuser\Desktop\RunTests.ps1 -InputObject $args[0]
+                    $i = $args[1]
+                    $tests = $args[2]
+                    $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
+                    Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
+
+                    Start-ScheduledTask -TaskName "Run Tests"
+                    do{
+                        $state = Get-ScheduledTask -TaskName "Run Tests"|select -expand State
+                        Start-Sleep -Milliseconds 500
+                    } while($state -eq "Running")
+                } -ArgumentList @($script, $i, $splitTests[$i])
             }
       - task: PublishTestResults@2
         inputs:
