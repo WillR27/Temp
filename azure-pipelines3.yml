@@ -25,6 +25,9 @@ jobs:
             $uitestsDirectory = "${targetDirectory}\UITests"
             $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
 
+            Write-Host Listing test names
+            & $vstest "${uitestsDirectory}\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${uitestsDirectory}\TestNames.txt"
+            $tests = Get-Content "${uitestsDirectory}\TestNames.txt"
 
             Write-Host Splitting test names per machine
             $splitTests = @($null) * $numMachines
@@ -79,7 +82,6 @@ jobs:
                     $tests = $args[2]
                     $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
                     Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
-
 
                 } -ArgumentList @($script, $i, $splitTests[$i])
             }
