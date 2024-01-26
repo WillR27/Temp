@@ -80,11 +80,7 @@ jobs:
                     $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
                     Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
 
-                    Start-ScheduledTask -TaskName "Run Tests"
-                    do{
-                        $state = Get-ScheduledTask -TaskName "Run Tests"|select -expand State
-                        Start-Sleep -Milliseconds 500
-                    } while($state -eq "Running")
+
                 } -ArgumentList @($script, $i, $splitTests[$i])
             }
       - task: PublishTestResults@2
