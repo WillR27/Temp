@@ -106,7 +106,7 @@ jobs:
                     Out-File -FilePath C:\Users\testuser\Desktop\RunTests.ps1 -InputObject $args[0]
                     $i = $args[1]
                     $tests = $args[2]
-                    $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
+                    $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
                     Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
 
                     Start-ScheduledTask -TaskName "Run Tests"
