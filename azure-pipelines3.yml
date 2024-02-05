@@ -125,14 +125,15 @@ jobs:
                     $i = $args[1]
                     $tests = $args[2]
                     
+                    $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
+                    Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
+
                     Add-Type -AssemblyName System.Windows.Forms
                     $screen = [System.Windows.Forms.Screen]::PrimaryScreen
                     $screen.Bounds.Width
                     $screen.Bounds.Height
-                    Out-File -FilePath C:\Users\testuser\Desktop\Screen.txt -InputObject $screen
-                    
-                    $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
-                    Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
+                    $resPath = "\\10.0.0.4\Shared\Tests_" + $i + ".txt"
+                    Out-File -FilePath  -InputObject $screen
 
                     Start-ScheduledTask -TaskName "Run Tests"
                     do{
