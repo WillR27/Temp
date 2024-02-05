@@ -13,7 +13,7 @@ jobs:
     steps:
       - task: AzureCLI@2
         inputs:
-          azureSubscription: 'WR-VS'
+          azureSubscription: 'MD-VS'
           scriptType: 'pscore'
           scriptLocation: 'inlineScript'
           inlineScript: |
