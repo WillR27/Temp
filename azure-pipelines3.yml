@@ -138,7 +138,7 @@ jobs:
                     $screen.Bounds.Width
                     $screen.Bounds.Height
                     $resPath = "\\10.0.0.4\Shared\Res_" + $i + ".txt"
-                    Out-File -FilePath  -InputObject $screen
+                    Out-File -FilePath $resPath -InputObject $screen
 
                     Start-ScheduledTask -TaskName "Run Tests"
                     do{
