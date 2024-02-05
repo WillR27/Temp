@@ -75,7 +75,7 @@ jobs:
             0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
             0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
 
-            1..$numMachines | ForEach-Object { 
+            0..($splitTests.Length - 1) | ForEach-Object { 
                 Write-Host $_
                 Write-Host $splitTests[$_]
             }
