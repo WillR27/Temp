@@ -21,10 +21,29 @@ jobs:
         inputs:
           command: 'custom'
           customCommand: 'install chromedriver --detect_chromedriver_version'
+      - task: PowerShell@2
+        inputs:
+          targetType: 'inline'
+          script: |
+            $sharedDirectory = "C:\Shared"
+
+            Write-Host Deleting old files
+            Get-ChildItem -Path $sharedDirectory | ForEach-Object -Process { 
+              if($_.attributes -eq "Directory") {
+                Remove-Item -Path $_.FullName -Recurse -Force
+              } else {
+                Remove-Item -Path $_.FullName -Force
+              }
+            }
       - task: CopyFiles@2
         inputs:
           SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
-          Contents: '**'
+          Contents: 'chromedriver.exe'
+          TargetFolder: 'C:/Shared/Build'
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: 'C:/Users/testuser/Desktop'
+          Contents: 'SetResolution.exe'
           TargetFolder: 'C:/Shared/Build'
       - task: AzureCLI@2
         inputs:
@@ -39,15 +58,6 @@ jobs:
             $targetDirectory2 = "\\10.0.0.4\Shared\Build"
             $uitestsDirectory = "${targetDirectory}\UITests"
             $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
-
-            Write-Host Deleting old files
-            Get-ChildItem -Path $sharedDirectory | ForEach-Object -Process { 
-              if($_.attributes -eq "Directory") {
-                Remove-Item -Path $_.FullName -Recurse -Force
-              } else {
-                Remove-Item -Path $_.FullName -Force
-              }
-            }
             
             Remove-Item -Path $targetDirectory -Force -Recurse -ErrorAction Ignore
             $buildId = az pipelines runs list --org https://dev.azure.com/MooDPlatform/ --project MooD --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
@@ -127,6 +137,8 @@ jobs:
                     
                     $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
                     Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
+
+                    & "C:\Temp\Build\SetResolution.exe" 1080 -m1 -noprompt
 
                     Add-Type -AssemblyName System.Windows.Forms
                     $screen = [System.Windows.Forms.Screen]::PrimaryScreen
