@@ -47,7 +47,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-            $numMachines = 1
+            $numMachines = 4
             $sharedDirectory = "C:\Shared"
             $targetDirectory = "$sharedDirectory\Build"
             $targetDirectory2 = "\\10.0.0.4\Shared\Build"
@@ -74,6 +74,11 @@ jobs:
             1..$numMachines | ForEach-Object { $splitTests[$_ - 1] = [System.Collections.Generic.List[string]]::new() }
             0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
             0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
+
+            1..$numMachines | ForEach-Object { 
+                Write-Host $_
+                Write-Host $splitTests[$_]
+            }
 
             Write-Host Creating VMs
             1..$numMachines | ForEach-Object -Parallel { 
