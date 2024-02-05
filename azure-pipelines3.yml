@@ -39,12 +39,12 @@ jobs:
         inputs:
           SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
           Contents: 'chromedriver.exe'
-          TargetFolder: 'C:/Shared/Build'
+          TargetFolder: 'C:/Shared'
       - task: CopyFiles@2
         inputs:
           SourceFolder: 'C:/Users/testuser/Desktop'
           Contents: 'SetResolution.exe'
-          TargetFolder: 'C:/Shared/Build'
+          TargetFolder: 'C:/Shared'
       - task: AzureCLI@2
         inputs:
           azureSubscription: 'MD-VS'
@@ -101,7 +101,7 @@ jobs:
 
             $script = @"
             Write-Host Installing MooD
-            Copy-item -Path "\\10.0.0.4\Shared\Build" -Destination "C:\Temp\Build" -Recurse
+            Copy-item -Path "\\10.0.0.4\Shared" -Destination "C:\Temp" -Recurse
 
             `$installerFilename = "C:\Temp\Build\MooD17.006.000_BusinessArchitectSetup.exe"
             `$processStartInfo = new-object "Diagnostics.ProcessStartInfo"
@@ -117,7 +117,7 @@ jobs:
             Expand-Archive -LiteralPath "C:\Temp\Build\UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
 
             Write-Host Replacing Chromedriver
-            Copy-item -Path "C:\Temp\Build\chromedriver.exe" -Destination "C:\Program Files (x86)\MooD\17"
+            Copy-item -Path "C:\Temp\chromedriver.exe" -Destination "C:\Program Files (x86)\MooD\17"
 
             Write-Host Installing licence
             [microsoft.win32.registry]::SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\MooD International\Licence\17.0", "licencepath", "C:\Temp\Build\Internallicence.xml")
@@ -138,7 +138,7 @@ jobs:
                     $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
                     Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
 
-                    & "C:\Temp\Build\SetResolution.exe" 1080 -m1 -noprompt
+                    & "C:\Temp\SetResolution.exe" 1080 -m1 -noprompt
 
                     Add-Type -AssemblyName System.Windows.Forms
                     $screen = [System.Windows.Forms.Screen]::PrimaryScreen
