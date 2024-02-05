@@ -11,6 +11,20 @@ pool:
 jobs:
   - job: Test
     steps:
+      - task: NodeTool@0
+        inputs:
+          versionSource: 'spec'
+          versionSpec: '20.x'
+          checkLatest: true
+      - task: Npm@1
+        inputs:
+          command: 'custom'
+          customCommand: 'install chromedriver --detect_chromedriver_version'
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
+          Contents: '**'
+          TargetFolder: 'C:/Shared/Build'
       - task: AzureCLI@2
         inputs:
           azureSubscription: 'MD-VS'
@@ -57,7 +71,7 @@ jobs:
 
             Write-Host Creating VMs
             1..$numMachines | ForEach-Object -Parallel { 
-              az vm create --resource-group ui-tests --name vm-ui-tests-$_ --image "/subscriptions/1abd2ed2-8cfd-487a-8b4a-1feeb4498ccd/resourceGroups/test-resource-group/providers/Microsoft.Compute/galleries/testGallery/images/testDefinition2" --specialized --license-type Windows_Client --admin-password Ts0rg123_Ts0rg123 --admin-username testuser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""'
+              az vm create --resource-group ui-tests --name vm-ui-tests-$_ --image "subscriptions/0c8dec2a-b188-4313-a3e2-70f255ada0b9/resourceGroups/ui-tests/providers/Microsoft.Compute/galleries/UITestsGallery/images/UITestsDefinition" --specialized --license-type Windows_Client --admin-password Ts0rg123_Ts0rg123 --admin-username testuser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""'
             } -ThrottleLimit $numMachines
 
             Write-Host Getting ips
@@ -84,12 +98,15 @@ jobs:
             `$processStartInfo.Arguments = "/quiet"
             `$process = [Diagnostics.Process]::Start(`$processStartInfo)
             `$process.WaitForExit();
-                          
+              
             Write-Host Extracting CppTests
             Expand-Archive -LiteralPath "C:\Temp\Build\CppTests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
                           
             Write-Host Extracting UITests
             Expand-Archive -LiteralPath "C:\Temp\Build\UITests.zip" -DestinationPath "C:\Program Files (x86)\MooD\17" -Force
+
+            Write-Host Replacing Chromedriver
+            Copy-item -Path "C:\Temp\Build\chromedriver.exe" -Destination "C:\Program Files (x86)\MooD\17"
 
             Write-Host Installing licence
             [microsoft.win32.registry]::SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\MooD International\Licence\17.0", "licencepath", "C:\Temp\Build\Internallicence.xml")
