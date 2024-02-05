@@ -138,7 +138,7 @@ jobs:
                     $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
                     Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
 
-                    & "C:\Temp\SetResolution.exe" 1080 -m1 -noprompt
+                    & "C:\Temp\SetResolution.exe" SET -w 1920 -h 1080 -m1 -noprompt
 
                     Add-Type -AssemblyName System.Windows.Forms
                     $screen = [System.Windows.Forms.Screen]::PrimaryScreen
