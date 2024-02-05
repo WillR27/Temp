@@ -96,13 +96,13 @@ jobs:
 
             $script = @"
             Add-Type -AssemblyName System.Windows.Forms
-            $screen = [System.Windows.Forms.Screen]::PrimaryScreen
-            $screen.Bounds.Width
-            $screen.Bounds.Height
-            $resPath = "C:\Temp\Res_.txt"
-            Out-File -FilePath $resPath -InputObject $screen
-            $resPath = "\\10.0.0.4\Shared\Res_.txt"
-            Out-File -FilePath $resPath -InputObject $screen
+            `$screen = [System.Windows.Forms.Screen]::PrimaryScreen
+            `$screen.Bounds.Width
+            `$screen.Bounds.Height
+            `$resPath = "C:\Temp\Res_.txt"
+            Out-File -FilePath `$resPath -InputObject $screen
+            `$resPath = "\\10.0.0.4\Shared\Res_.txt"
+            Out-File -FilePath `$resPath -InputObject $screen
 
             Write-Host Installing MooD
             Copy-item -Path "\\10.0.0.4\Shared" -Destination "C:\Temp" -Recurse
