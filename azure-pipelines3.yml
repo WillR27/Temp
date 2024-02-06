@@ -48,10 +48,23 @@ jobs:
           inlineScript: |
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
             $numMachines = 2
+            $sharedDirectory = "C:\Shared"
+            $targetDirectory = "$sharedDirectory\Build"
+            $targetDirectory2 = "\\10.0.0.4\Shared\Build"
+            $uitestsDirectory = "${targetDirectory}\UITests"
+            $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
+
+
+            Write-Host Creating VMs
+            1..$numMachines | ForEach-Object -Parallel { 
+              az vm create --resource-group ui-tests --name vm-ui-tests-$_ --image "/subscriptions/0c8dec2a-b188-4313-a3e2-70f255ada0b9/resourceGroups/ui-tests/providers/Microsoft.Compute/galleries/UITestsGallery/images/UITestsDefinition" --specialized --license-type Windows_Client --admin-password Ts0rg123_Ts0rg123 --admin-username testuser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
+            } -ThrottleLimit $numMachines
+
             
             Write-Host Deleting VMs
-            az vm delete -g ui-tests -n vm-ui-tests-1 --force-deletion true --yes
-            az vm delete -g ui-tests -n vm-ui-tests-2 --force-deletion true --yes
+            1..$numMachines | ForEach-Object -Parallel { 
+              az vm delete -g ui-tests -n vm-ui-tests-$_ --force-deletion true --yes --force-deletion true --yes
+            } -ThrottleLimit $numMachines
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
