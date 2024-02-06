@@ -50,7 +50,8 @@ jobs:
             $numMachines = 2
             
             Write-Host Deleting VMs
-            1..$numMachines | az vm delete -g ui-tests -n vm-ui-tests-$_ --force-deletion true --yes
+            az vm delete -g ui-tests -n vm-ui-tests-1 --force-deletion true --yes
+            az vm delete -g ui-tests -n vm-ui-tests-2 --force-deletion true --yes
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
