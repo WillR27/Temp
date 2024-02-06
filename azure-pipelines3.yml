@@ -139,7 +139,7 @@ jobs:
 
             
             Write-Host Deleting VMs
-            1..$numMachines | az vm delete -g ui-tets -n vm-ui-tests-$_ --force-deletion --yes
+            1..$numMachines | az vm delete -g ui-tests -n vm-ui-tests-$_ --force-deletion true --no-wait --yes
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
