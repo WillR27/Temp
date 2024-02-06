@@ -47,7 +47,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-            $numMachines = 4
+            $numMachines = 1
             $sharedDirectory = "C:\Shared"
             $targetDirectory = "$sharedDirectory\Build"
             $targetDirectory2 = "\\10.0.0.4\Shared\Build"
