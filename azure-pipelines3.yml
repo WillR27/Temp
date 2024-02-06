@@ -76,7 +76,6 @@ jobs:
             0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
 
             0..($splitTests.Length - 1) | ForEach-Object { 
-                Write-Host $_
                 Write-Host $splitTests[$_]
             }
 
@@ -89,10 +88,10 @@ jobs:
             $ips = [System.Collections.ArrayList]@()
             1..$numMachines | ForEach-Object { 
                 $ip = az vm list-ip-addresses --resource-group ui-tests --name vm-ui-tests-$_ --query [0].virtualMachine.network.privateIpAddresses[0] 
-                $ips.Add($ip.Replace('"', ''))
+                $ips.Add($ip.Replace('"', '')) | Out-Null
             }
 
-            Start-Sleep -Seconds 180
+            #Start-Sleep -Seconds 120
 
             Write-Host Trusting ips
             $ipsStr = $ips -join ','
@@ -138,28 +137,9 @@ jobs:
             Write-Host Running tests
             "@
 
-            $jobs = [System.Collections.ArrayList]@()
-
-            for ($i = 0; $i -lt $numMachines; $i++) {
-                $job = Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
-                    Out-File -FilePath C:\Users\testuser\Desktop\RunTests.ps1 -InputObject $args[0]
-                    $i = $args[1]
-                    $tests = $args[2]
-                    
-                    $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
-                    Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
-
-                    Start-ScheduledTask -TaskName "Run Tests"
-                    do{
-                        $state = Get-ScheduledTask -TaskName "Run Tests"|select -expand State
-                        Start-Sleep -Milliseconds 500
-                    } while($state -eq "Running")
-                } -AsJob -ArgumentList @($script, $i, $splitTests[$i])
-
-                $jobs.Add($job)
-            }
-
-            $jobs | Receive-Job -Wait -AutoRemoveJob
+            
+            Write-Host Deleting VMs
+            1..$numMachines | az vm delete -g ui-tets -n vm-ui-tests-$_ --force-deletion --yes
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
