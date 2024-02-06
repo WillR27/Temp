@@ -47,7 +47,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-            $numMachines = 8
+            $numMachines = 4
             $sharedDirectory = "C:\Shared"
             $targetDirectory = "$sharedDirectory\Build"
             $targetDirectory2 = "\\10.0.0.4\Shared\Build"
@@ -88,7 +88,7 @@ jobs:
             Write-Host Getting ips
             $ips = [System.Collections.ArrayList]@()
             1..$numMachines | ForEach-Object { 
-                $ip = az vm list-ip-addresses --resource-group ui-tests --name vm-ui-tests-$_ --query [0].virtualMachine.network.privateIpAddresses[0] 
+                $ip = az vm list-ip-addresses --resource-group ui-tests-generated --name vm-ui-tests-$_ --query [0].virtualMachine.network.privateIpAddresses[0] 
                 $ips.Add($ip.Replace('"', ''))
             }
 
