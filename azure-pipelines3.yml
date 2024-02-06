@@ -138,8 +138,10 @@ jobs:
             Write-Host Running tests
             "@
 
+            $jobs = [System.Collections.ArrayList]@()
+
             for ($i = 0; $i -lt $numMachines; $i++) {
-                Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
+                $job = Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
                     Out-File -FilePath C:\Users\testuser\Desktop\RunTests.ps1 -InputObject $args[0]
                     $i = $args[1]
                     $tests = $args[2]
@@ -152,8 +154,12 @@ jobs:
                         $state = Get-ScheduledTask -TaskName "Run Tests"|select -expand State
                         Start-Sleep -Milliseconds 500
                     } while($state -eq "Running")
-                } -ArgumentList @($script, $i, $splitTests[$i])
+                } -AsJob -ArgumentList @($script, $i, $splitTests[$i])
+
+                $jobs.Add($job)
             }
+
+            $jobs | Receive-Job -Wait -AutoRemoveJob
       - task: PublishTestResults@2
         inputs:
           testResultsFormat: 'VSTest'
