@@ -175,7 +175,7 @@ jobs:
 
             Write-Host Updating machine name for tests
             1..$numMachines | ForEach-Object -Parallel { 
-                $resultsFile = "$localSharedDir\Tests_$_.trx"
+                $resultsFile = "$using:sharedDir\Tests_$_.trx"
                 $xml = [xml](Get-Content -Path $resultsFile)
                 $nodes = $xml.SelectNodes("//*[@computerName]");
                 foreach($node in $nodes) {
