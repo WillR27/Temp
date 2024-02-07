@@ -154,7 +154,7 @@ jobs:
             for ($i = 0; $i -lt $numMachines; $i++) {
                 $job = Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
                     Out-File -FilePath C:\Users\testuser\Desktop\RunTests.ps1 -InputObject $args[0]
-                    $i = $args[1]
+                    $i = $args[1] + 1
                     $tests = $args[2]
                     
                     $vstestCmd = '& ' + "$using:vstest" + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"'
