@@ -120,7 +120,7 @@ jobs:
             `$tempBuildDir = "`$tempDir\Build"
 
             Write-Host Installing MooD
-            Copy-item -Path $sharedDir -Destination $tempDir -Recurse
+            Copy-item -Path $sharedDir -Destination `$tempDir -Recurse
 
             `$installerFilename = "`$tempBuildDir\MooD17.006.000_BusinessArchitectSetup.exe"
             `$processStartInfo = new-object "Diagnostics.ProcessStartInfo"
@@ -157,7 +157,7 @@ jobs:
                     $i = $args[1]
                     $tests = $args[2]
                     
-                    $vstestCmd = '& ' + $using:vstest + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"'
+                    $vstestCmd = '& ' + "$using:vstest" + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"'
                     Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstestCmd
 
                     Start-ScheduledTask -TaskName "Run Tests"
@@ -175,7 +175,7 @@ jobs:
 
             Write-Host Updating machine name for tests
             1..$numMachines | ForEach-Object -Parallel { 
-                $resultsFile = "$sharedDir\Tests_$_.trx"
+                $resultsFile = "$localSharedDir\Tests_$_.trx"
                 $xml = [xml](Get-Content -Path $resultsFile)
                 $nodes = $xml.SelectNodes("//*[@computerName]");
                 foreach($node in $nodes) {
