@@ -107,8 +107,8 @@ jobs:
                 $ips.Add($ip.Replace('"', '')) | Out-Null
             }
 
-            Write-Host Sleeping for 120 seconds to let VMs boot
-            Start-Sleep -Seconds 120
+            Write-Host Sleeping for 150 seconds to let VMs boot
+            Start-Sleep -Seconds 150
 
             Write-Host Trusting VM ips
             $ipsStr = $ips -join ','
