@@ -92,8 +92,7 @@ jobs:
 
             Write-Host Creating VMs
             1..$numMachines | ForEach-Object -Parallel { 
-                Write-Host az vm create --resource-group $resourceGroup --name "${vmPrefix}${_}" --image $vmImageUrl --specialized --license-type Windows_Client --admin-password $vmPassword --admin-username $vmUser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
-                az vm create --resource-group $resourceGroup --name "${vmPrefix}${_}" --image $vmImageUrl --specialized --license-type Windows_Client --admin-password $vmPassword --admin-username $vmUser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
+                az vm create --resource-group $using:resourceGroup --name "$($using:vmPrefix)${_}" --image $using:vmImageUrl --specialized --license-type Windows_Client --admin-password $using:vmPassword --admin-username $using:vmUser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
             } -ThrottleLimit $numMachines
 
             Write-Host Getting VM ips
@@ -182,7 +181,7 @@ jobs:
 
             Write-Host Deleting VMs
             1..$numMachines | ForEach-Object -Parallel { 
-                az vm delete -g $resourceGroup -n "${vmPrefix}${_}" --force-deletion true --yes --force-deletion true --yes
+                az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --force-deletion true --yes --force-deletion true --yes
             } -ThrottleLimit $numMachines
       - task: PublishTestResults@2
         inputs:
