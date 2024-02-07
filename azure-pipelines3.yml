@@ -52,7 +52,7 @@ jobs:
             $sharedDir = "\\$hostIp\Shared"
             $buildDir = "$sharedDir\Build"
             $uiTestsDir = "$buildDir\UITests"
-            $localSharedDir = "C:\Temp\Shared"
+            $localSharedDir = "C:\Shared"
             $localBuildDir = "$localSharedDir\Build"
             $localUiTestsDir = "$localBuildDir\UITests"
             $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
@@ -63,6 +63,7 @@ jobs:
             $vmImageUrl = "/subscriptions/0c8dec2a-b188-4313-a3e2-70f255ada0b9/resourceGroups/ui-tests/providers/Microsoft.Compute/galleries/UITestsGallery/images/UITestsDefinition"
             $vmUser = "testuser"
             $vmPassword = "Ts0rg123_Ts0rg123"
+            $moodDir = "C:\Program Files (x86)\MooD\17"
 
             Write-Host Downloading latest build artifacts
             $buildId = az pipelines runs list --org $orgUrl --project $projectName --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
@@ -112,7 +113,6 @@ jobs:
             $script = @"
             `$tempDir = "C:\Temp"
             `$tempBuildDir = "`$tempDir\Build"
-            `$moodDir = "C:\Program Files (x86)\MooD\17"
 
             Write-Host Installing MooD
             Copy-item -Path $sharedDir -Destination $tempDir -Recurse
@@ -125,20 +125,20 @@ jobs:
             `$process.WaitForExit();
                 
             Write-Host Extracting CppTests
-            Expand-Archive -LiteralPath "`$tempBuildDir\CppTests.zip" -DestinationPath `$moodDir -Force
+            Expand-Archive -LiteralPath "`$tempBuildDir\CppTests.zip" -DestinationPath "$moodDir" -Force
                             
             Write-Host Extracting UITests
-            Expand-Archive -LiteralPath "`$tempBuildDir\UITests.zip" -DestinationPath `$moodDir -Force
+            Expand-Archive -LiteralPath "`$tempBuildDir\UITests.zip" -DestinationPath "$moodDir" -Force
 
             Write-Host Replacing Chromedriver
-            Copy-item -Path "`$tempDir\chromedriver.exe" -Destination `$moodDir
+            Copy-item -Path "`$tempDir\chromedriver.exe" -Destination "$moodDir"
 
             Write-Host Installing licence
             [microsoft.win32.registry]::SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\MooD International\Licence\17.0", "licencepath", "`$tempBuildDir\Internallicence.xml")
 
             Write-Host Creating rep
-            & "`$moodDir\MooDRepositoryManager.com" addserver /server localhost 
-            & "`$moodDir\MooDRepositoryManager.com" create /server "localhost" /name "17Test1a"
+            & "$moodDir\MooDRepositoryManager.com" addserver /server localhost 
+            & "$moodDir\MooDRepositoryManager.com" create /server "localhost" /name "17Test1a"
 
             Write-Host Running tests
             "@
@@ -152,8 +152,8 @@ jobs:
                     $i = $args[1]
                     $tests = $args[2]
                     
-                    $vstest = '& "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe" "C:\Program Files (x86)\MooD\17\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=\\10.0.0.4\Shared\Tests_' + "$i" + '.trx"'
-                    Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstest
+                    $vstestCmd = '& ' + $using:vstest + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"'
+                    Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstestCmd
 
                     Start-ScheduledTask -TaskName "Run Tests"
                     do {
