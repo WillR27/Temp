@@ -47,7 +47,7 @@ jobs:
           scriptLocation: 'inlineScript'
           inlineScript: |
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-            $numMachines = 10
+            $numMachines = 8
             $hostIp = "10.0.0.4"
             $sharedDir = "\\$hostIp\Shared"
             $buildDir = "$sharedDir\Build"
@@ -59,11 +59,16 @@ jobs:
             $orgUrl = "https://dev.azure.com/MooDPlatform/"
             $projectName = "MooD"
             $resourceGroup = "ui-tests"
-            $vmPrefix = "ui-test-vm-"
+            $vmPrefix = "ui-tests-vm-"
             $vmImageUrl = "/subscriptions/0c8dec2a-b188-4313-a3e2-70f255ada0b9/resourceGroups/ui-tests/providers/Microsoft.Compute/galleries/UITestsGallery/images/UITestsDefinition"
             $vmUser = "testuser"
             $vmPassword = "Ts0rg123_Ts0rg123"
             $moodDir = "C:\Program Files (x86)\MooD\17"
+
+            Write-Host Ensuring old VMs are deleted
+            1..10 | ForEach-Object -Parallel { 
+                az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --force-deletion true --yes --force-deletion true --yes
+            } -ThrottleLimit 10
 
             Write-Host Downloading latest build artifacts
             $buildId = az pipelines runs list --org $orgUrl --project $projectName --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
@@ -86,8 +91,8 @@ jobs:
             0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
 
             Write-Host Test case filters:
-            0..($splitTests.Length - 1) | ForEach-Object { 
-                Write-Host VM"$_": $splitTests[$_]
+            1..$numMachines | ForEach-Object { 
+                Write-Host VM"$_": $splitTests[$_ - 1]
             }
 
             Write-Host Creating VMs
