@@ -71,7 +71,7 @@ jobs:
             az pipelines runs artifact download --artifact-name MooD --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
 
             Write-Host Extracting UITests locally
-            Expand-Archive-LiteralPath"${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
+            Expand-Archive -LiteralPath "${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
 
             Write-Host Listing test names
             $testNamesFile = "$localBuildDir\TestNames.txt"
