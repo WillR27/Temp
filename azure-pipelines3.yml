@@ -49,9 +49,12 @@ jobs:
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
             $numMachines = 10
             $hostIp = "10.0.0.4"
-            $sharedDirectory = "\\$hostIp\Shared"
-            $buildDirectory = "$sharedDirectory\Build"
-            $uitestsDirectory = "${buildDirectory}\UITests"
+            $sharedDir = "\\$hostIp\Shared"
+            $buildDir = "$sharedDir\Build"
+            $uiTestsDir = "$buildDir\UITests"
+            $localSharedDir = "C:\Temp\Shared"
+            $localBuildDir = "$localSharedDir\Build"
+            $localUiTestsDir = "$localBuildDir\UITests"
             $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
             $orgUrl = "https://dev.azure.com/MooDPlatform/"
             $projectName = "MooD"
@@ -63,19 +66,19 @@ jobs:
 
             Write-Host Downloading latest build artifacts
             $buildId = az pipelines runs list --org $orgUrl --project $projectName --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
-            az pipelines runs artifact download --artifact-name CPPTestsZip --path $buildDirectory --run-id $buildId --org $orgUrl --project $projectName
-            az pipelines runs artifact download --artifact-name UITestsZip --path $buildDirectory --run-id $buildId --org $orgUrl --project $projectName
-            az pipelines runs artifact download --artifact-name MooD --path $buildDirectory --run-id $buildId --org $orgUrl --project $projectName
+            az pipelines runs artifact download --artifact-name CPPTestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
+            az pipelines runs artifact download --artifact-name UITestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
+            az pipelines runs artifact download --artifact-name MooD --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
 
             Write-Host Extracting UITests locally
-            Expand-Archive -LiteralPath "${buildDirectory}\UITests.zip" -DestinationPath $uitestsDirectory -Force
+            Expand-Archive-LiteralPath"${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
 
             Write-Host Listing test names
-            $testNamesFile = "${uitestsDirectory}\TestNames.txt"
-            & $vstest "${uitestsDirectory}\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${testNamesFile}"
+            $testNamesFile = "$localBuildDir\TestNames.txt"
+            & $vstest "$localUiTestsDir\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${testNamesFile}"
             $tests = Get-Content $testNamesFile
 
-            Write-Host Splitting test names per machine
+            Write-Host Splitting tests per VM
             $splitTests = @($null) * $numMachines
             0..($numMachines - 1) | ForEach-Object { $splitTests[$_] = [System.Collections.Generic.List[string]]::new() }
             0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
@@ -112,7 +115,7 @@ jobs:
             `$moodDir = "C:\Program Files (x86)\MooD\17"
 
             Write-Host Installing MooD
-            Copy-item -Path $sharedDirectory -Destination $tempDir -Recurse
+            Copy-item -Path $sharedDir -Destination $tempDir -Recurse
 
             `$installerFilename = "`$tempBuildDir\MooD17.006.000_BusinessArchitectSetup.exe"
             `$processStartInfo = new-object "Diagnostics.ProcessStartInfo"
@@ -167,7 +170,7 @@ jobs:
 
             Write-Host Updating machine name for tests
             1..$numMachines | ForEach-Object -Parallel { 
-                $resultsFile = "$sharedDirectory\Tests_$_.trx"
+                $resultsFile = "$sharedDir\Tests_$_.trx"
                 $xml = [xml](Get-Content -Path $resultsFile)
                 $nodes = $xml.SelectNodes("//*[@computerName]");
                 foreach($node in $nodes) {
