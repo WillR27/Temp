@@ -87,11 +87,12 @@ jobs:
 
             Write-Host Test case filters:
             0..($splitTests.Length - 1) | ForEach-Object { 
-                Write-Host "VM" + $_ + ": " + $splitTests[$_]
+                Write-Host VM"$_": $splitTests[$_]
             }
 
             Write-Host Creating VMs
             1..$numMachines | ForEach-Object -Parallel { 
+                Write-Host az vm create --resource-group $resourceGroup --name "${vmPrefix}${_}" --image $vmImageUrl --specialized --license-type Windows_Client --admin-password $vmPassword --admin-username $vmUser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
                 az vm create --resource-group $resourceGroup --name "${vmPrefix}${_}" --image $vmImageUrl --specialized --license-type Windows_Client --admin-password $vmPassword --admin-username $vmUser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
             } -ThrottleLimit $numMachines
 
