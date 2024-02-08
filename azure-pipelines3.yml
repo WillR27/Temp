@@ -71,6 +71,7 @@ jobs:
             } -ThrottleLimit 10
 
             Write-Host Downloading latest build artifacts
+            Write-Host Getting build id
             $buildId = az pipelines runs list --org $orgUrl --project $projectName --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
             az pipelines runs artifact download --artifact-name CPPTestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
             az pipelines runs artifact download --artifact-name UITestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
@@ -179,7 +180,7 @@ jobs:
                 $xml = [xml](Get-Content -Path $resultsFile)
                 $nodes = $xml.SelectNodes("//*[@computerName]");
                 foreach($node in $nodes) {
-                    $node.SetAttribute("computerName", "VM 1");
+                    $node.SetAttribute("computerName", "VM $_");
                 }
                 $xml.Save($resultsFile)
             } -ThrottleLimit $numMachines
