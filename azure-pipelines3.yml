@@ -120,10 +120,16 @@ jobs:
             `$tempDir = "C:\Temp"
             `$tempBuildDir = "`$tempDir\Build"
 
-            Write-Host Installing MooD
+            Write-Host Copying setup files locally
             Copy-item -Path $sharedDir -Destination `$tempDir -Recurse
 
-            `$installerFilename = "`$tempBuildDir\MooD17.006.000_BusinessArchitectSetup.exe"
+            Write-Host Finding BA installer
+            `$results = Get-ChildItem -Path `$tempBuildDir |
+              Where-Object Name -match ".*BusinessArchitectSetup.exe" | 
+              Select-Object FullName
+            `$installerFilename = `$results[0].FullName
+
+            Write-Host Installing MooD
             `$processStartInfo = new-object "Diagnostics.ProcessStartInfo"
             `$processStartInfo.FileName = `$installerFilename
             `$processStartInfo.Arguments = "/quiet"
