@@ -48,7 +48,7 @@ jobs:
           inlineScript: |
             $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
             $numMachines = 9
-            $hostIp = "10.0.0.4"
+            $hostIp = ""+(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet 5").IPAddress
             $sharedDir = "\\$hostIp\Shared"
             $buildDir = "$sharedDir\Build"
             $uiTestsDir = "$buildDir\UITests"
