@@ -193,7 +193,7 @@ jobs:
 
             Write-Host Deleting VMs
             1..$numMachines | ForEach-Object -Parallel { 
-                az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --force-deletion true --yes --force-deletion true --yes
+                az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --no-wait --force-deletion true --yes
             } -ThrottleLimit $numMachines
       - task: PublishTestResults@2
         inputs:
