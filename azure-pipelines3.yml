@@ -33,7 +33,7 @@ parameters:
 - name: testCaseFilters
   displayName: Test case filters (per machine)
   type: object
-  default:
+  default: ''
 
 variables:
 - name: resourceGroup
