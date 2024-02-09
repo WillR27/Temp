@@ -31,6 +31,12 @@ parameters:
   type: boolean
   default: false
 
+variables:
+- name: resourceGroup
+  value: ui-tests
+- name: vmPrefix
+  value: ui-tests-vm- 
+
 jobs:
   - job: Test
     timeoutInMinutes: 180
@@ -69,9 +75,9 @@ jobs:
             Contents: 'chromedriver.exe'
             TargetFolder: 'C:/Shared'
         - task: AzureCLI@2
-          displayName: Setup and run testS
+          displayName: Setup and run tests
           env:
-            parameter.numMachines: ${{ parameters.numMachines }}
+            numMachines: ${{ parameters.numMachines }}
           inputs:
             azureSubscription: 'MD-VS'
             scriptType: 'pscore'
@@ -89,8 +95,8 @@ jobs:
               $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
               $orgUrl = "https://dev.azure.com/MooDPlatform/"
               $projectName = "MooD"
-              $resourceGroup = "ui-tests"
-              $vmPrefix = "ui-tests-vm-"
+              $resourceGroup = $(resourceGroup)
+              $vmPrefix = $(vmPrefix)
               $vmImageUrl = "/subscriptions/0c8dec2a-b188-4313-a3e2-70f255ada0b9/resourceGroups/ui-tests/providers/Microsoft.Compute/galleries/UITestsGallery/images/UITestsDefinition"
               $vmUser = "testuser"
               $vmPassword = "Ts0rg123_Ts0rg123"
@@ -227,6 +233,7 @@ jobs:
                   az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --no-wait --force-deletion true --yes
               } -ThrottleLimit $numMachines
         - task: PublishTestResults@2
+          displayName: Publish test results
           inputs:
             testResultsFormat: 'VSTest'
             testResultsFiles: '*.trx'
@@ -235,6 +242,8 @@ jobs:
       - ${{ if eq(parameters.deleteVMs, true) }}:
         - task: AzureCLI@2
           displayName: Delete VMs
+          env:
+            numMachines: ${{ parameters.numMachines }}
           inputs:
             azureSubscription: 'MD-VS'
             scriptType: 'pscore'
@@ -242,8 +251,8 @@ jobs:
             inlineScript: |
               $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
               $numMachines = $env:numMachines
-              $resourceGroup = "ui-tests"
-              $vmPrefix = "ui-tests-vm-"
+              $resourceGroup = $(resourceGroup)
+              $vmPrefix = $(vmPrefix)
 
               Write-Host Deleting VMs
               1..$numMachines | ForEach-Object -Parallel { 
