@@ -8,9 +8,20 @@ trigger: none
 pool:
    name: UITestPoolAzure
 
-variables:
-- name: one
-  value: initialValue 
+parameters:
+- name: numMachines
+  displayName: Number of Machines
+  type: number
+  default: 8
+  values:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
 
 jobs:
   - job: Test
