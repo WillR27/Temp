@@ -10,7 +10,7 @@ pool:
 
 parameters:
 - name: numMachines
-  displayName: Number of Machines
+  displayName: Number of Machines (max 8)
   type: number
   default: 8
   values:
@@ -33,7 +33,11 @@ parameters:
 - name: testCaseFilters
   displayName: Test case filters (per machine)
   type: object
-  default: {}
+  default: 
+    Specify the desired test case filters for each VM by replacing this with a list of values only like so:
+    - Name=Test1|Name=Test2
+    - Name=Test3|Name=Test4
+    - FullyQualifiedName=Test5
 
 variables:
 - name: resourceGroup
@@ -105,6 +109,7 @@ jobs:
               $vmUser = "testuser"
               $vmPassword = "Ts0rg123_Ts0rg123"
               $moodDir = "C:\Program Files (x86)\MooD\17"
+              $testCaseFiltersJson = '${{ convertToJson(parameters.testCaseFilters) }}'
 
               Write-Host Ensuring old VMs are deleted
               1..10 | ForEach-Object -Parallel { 
@@ -120,6 +125,14 @@ jobs:
 
               Write-Host Extracting UITests locally
               Expand-Archive -LiteralPath "${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
+
+              $testCaseFilters = [System.Collections.ArrayList]@()
+
+              if () {
+                $testCaseFiltersJson | ConvertFrom-Json | ForEach-Object { 
+                  $testCaseFilters.Add($_) | Out-Null
+                }
+              }
 
               Write-Host Listing test names
               $testNamesFile = "$localBuildDir\TestNames.txt"
