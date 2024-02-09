@@ -123,9 +123,6 @@ jobs:
               az pipelines runs artifact download --artifact-name UITestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
               az pipelines runs artifact download --artifact-name MooD --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
 
-              Write-Host Extracting UITests locally
-              Expand-Archive -LiteralPath "${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
-
               $testCaseFilters = [System.Collections.ArrayList]::new($numMachines)
               $testCaseFiltersProvided = $testCaseFiltersJson.PSobject.Properties.Name.Count -ne 1
 
@@ -137,6 +134,9 @@ jobs:
                 }
                 $numMachines = $testCaseFilters.Count
               } else {
+                Write-Host Extracting UITests locally
+                Expand-Archive -LiteralPath "${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
+
                 Write-Host Listing test names
                 $testNamesFile = "$localBuildDir\TestNames.txt"
                 & $vstest "$localUiTestsDir\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${testNamesFile}"
