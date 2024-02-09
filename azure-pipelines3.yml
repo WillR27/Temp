@@ -8,6 +8,10 @@ trigger: none
 pool:
    name: UITestPoolAzure
 
+variables:
+- name: one
+  value: initialValue 
+
 jobs:
   - job: Test
     timeoutInMinutes: 180
