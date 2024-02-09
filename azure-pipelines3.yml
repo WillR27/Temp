@@ -135,6 +135,7 @@ jobs:
                 $testCaseFiltersJson | ForEach-Object { 
                   $testCaseFilters.Add($_) | Out-Null
                 }
+                $numMachines = $testCaseFilters.Count
               } else {
                 Write-Host Listing test names
                 $testNamesFile = "$localBuildDir\TestNames.txt"
@@ -257,19 +258,16 @@ jobs:
       - ${{ if or(eq(parameters.deleteVMs, true), eq(parameters.cleanOnly, true)) }}:
         - task: AzureCLI@2
           displayName: Delete VMs
-          env:
-            numMachines: ${{ parameters.numMachines }}
           inputs:
             azureSubscription: 'MD-VS'
             scriptType: 'pscore'
             scriptLocation: 'inlineScript'
             inlineScript: |
               $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-              $numMachines = $env:numMachines
               $resourceGroup = "$(resourceGroup)"
               $vmPrefix = "$(vmPrefix)"
 
               Write-Host Deleting VMs
-              1..$numMachines | ForEach-Object -Parallel { 
+              1..10 | ForEach-Object -Parallel { 
                   az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --no-wait --force-deletion true --yes
-              } -ThrottleLimit $numMachines
+              } -ThrottleLimit 10
