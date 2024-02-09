@@ -154,7 +154,7 @@ jobs:
                   Write-Host VM"$_": $testCaseFilters[$_ - 1]
               }
 
-              Write-Host Creating VMs
+              Write-Host Creating $numMachines VMs
               1..$numMachines | ForEach-Object -Parallel { 
                   az vm create --resource-group $using:resourceGroup --name "$($using:vmPrefix)${_}" --image $using:vmImageUrl --specialized --license-type Windows_Client --admin-password $using:vmPassword --admin-username $using:vmUser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
               } -ThrottleLimit $numMachines
