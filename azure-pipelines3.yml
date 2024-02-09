@@ -30,6 +30,9 @@ parameters:
   displayName: Clean only (delete any VMs and don't run tests)
   type: boolean
   default: false
+- name: testCaseFilters
+  displayName: Test case filters (per machine)
+  type: object
 
 variables:
 - name: resourceGroup
