@@ -123,7 +123,7 @@ jobs:
               az pipelines runs artifact download --artifact-name UITestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
               az pipelines runs artifact download --artifact-name MooD --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
 
-              $testCaseFilters = [System.Collections.ArrayList]::new($numMachines)
+              $testCaseFilters = [System.Collections.ArrayList]@()
               $testCaseFiltersProvided = $testCaseFiltersJson.PSobject.Properties.Name.Count -ne 1
 
               if ($testCaseFiltersProvided) {
@@ -146,7 +146,8 @@ jobs:
                 $splitTests = @($null) * $numMachines
                 0..($numMachines - 1) | ForEach-Object { $splitTests[$_] = [System.Collections.Generic.List[string]]::new() }
                 0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
-                0..($splitTests.Length - 1) | ForEach-Object { $testCaseFilters[$_] = $splitTests[$_] -join '|' }
+                0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
+                0..($splitTests.Length - 1) | ForEach-Object { $testCaseFilters.Add($splitTests[$_]) }
               }
 
               Write-Host Test case filters:
