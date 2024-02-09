@@ -34,7 +34,7 @@ parameters:
   displayName: Test case filters (per machine)
   type: object
   default: 
-    Specify the desired test case filters for each VM by replacing this with a list of values only like so:
+    Delete this line and specify a list of filters like so to run specific test cases (each line is run its own VM up to the max):
     - Name=Test1|Name=Test2
     - Name=Test3|Name=Test4
     - FullyQualifiedName=Test5
@@ -109,7 +109,7 @@ jobs:
               $vmUser = "testuser"
               $vmPassword = "Ts0rg123_Ts0rg123"
               $moodDir = "C:\Program Files (x86)\MooD\17"
-              $testCaseFiltersJson = '${{ convertToJson(parameters.testCaseFilters) }}'
+              $testCaseFiltersJson = '${{ convertToJson(parameters.testCaseFilters) }}' | ConvertFrom-Json
 
               Write-Host Ensuring old VMs are deleted
               1..10 | ForEach-Object -Parallel { 
@@ -126,28 +126,31 @@ jobs:
               Write-Host Extracting UITests locally
               Expand-Archive -LiteralPath "${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
 
-              $testCaseFilters = [System.Collections.ArrayList]@()
+              $testCaseFilters = [System.Collections.ArrayList]::new($numMachines)
+              $testCaseFiltersProvided = $testCaseFiltersJson.PSobject.Properties.Name.Count -ne 1
 
-              if () {
-                $testCaseFiltersJson | ConvertFrom-Json | ForEach-Object { 
+              if ($testCaseFiltersProvided) {
+                Write-Host Using provided test case filters
+                $testCaseFilters = [System.Collections.ArrayList]@()
+                $testCaseFiltersJson | ForEach-Object { 
                   $testCaseFilters.Add($_) | Out-Null
                 }
+              } else {
+                Write-Host Listing test names
+                $testNamesFile = "$localBuildDir\TestNames.txt"
+                & $vstest "$localUiTestsDir\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${testNamesFile}"
+                $tests = Get-Content $testNamesFile
+
+                Write-Host Splitting tests per VM
+                $splitTests = @($null) * $numMachines
+                0..($numMachines - 1) | ForEach-Object { $splitTests[$_] = [System.Collections.Generic.List[string]]::new() }
+                0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
+                0..($splitTests.Length - 1) | ForEach-Object { $testCaseFilters[$_] = $splitTests[$_] -join '|' }
               }
-
-              Write-Host Listing test names
-              $testNamesFile = "$localBuildDir\TestNames.txt"
-              & $vstest "$localUiTestsDir\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${testNamesFile}"
-              $tests = Get-Content $testNamesFile
-
-              Write-Host Splitting tests per VM
-              $splitTests = @($null) * $numMachines
-              0..($numMachines - 1) | ForEach-Object { $splitTests[$_] = [System.Collections.Generic.List[string]]::new() }
-              0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
-              0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
 
               Write-Host Test case filters:
               1..$numMachines | ForEach-Object { 
-                  Write-Host VM"$_": $splitTests[$_ - 1]
+                  Write-Host VM"$_": $testCaseFilters[$_ - 1]
               }
 
               Write-Host Creating VMs
@@ -226,7 +229,7 @@ jobs:
                           $state = Get-ScheduledTask -TaskName "Run Tests" | Select-Object -expand State
                           Start-Sleep -Milliseconds 500
                       } while ($state -eq "Running")
-                  } -AsJob -ArgumentList @($script, $i, $splitTests[$i])
+                  } -AsJob -ArgumentList @($script, $i, $testCaseFilters[$i])
 
                   $jobs.Add($job) | Out-Null
               }
@@ -243,11 +246,6 @@ jobs:
                       $node.SetAttribute("computerName", "VM $_");
                   }
                   $xml.Save($resultsFile)
-              } -ThrottleLimit $numMachines
-
-              Write-Host Deleting VMs
-              1..$numMachines | ForEach-Object -Parallel { 
-                  az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --no-wait --force-deletion true --yes
               } -ThrottleLimit $numMachines
         - task: PublishTestResults@2
           displayName: Publish test results
