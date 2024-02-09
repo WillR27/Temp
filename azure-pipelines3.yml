@@ -22,197 +22,230 @@ parameters:
     - 6
     - 7
     - 8
+- name: deleteVMs
+  displayName: Delete VMs at end of run
+  type: boolean
+  default: true
+- name: cleanOnly
+  displayName: Clean only (delete any VMs and don't run tests)
+  type: boolean
+  default: false
 
 jobs:
   - job: Test
     timeoutInMinutes: 180
     steps:
-      - task: NodeTool@0
-        inputs:
-          versionSource: 'spec'
-          versionSpec: '20.x'
-          checkLatest: true
-      - task: Npm@1
-        inputs:
-          command: 'custom'
-          customCommand: 'install chromedriver --detect_chromedriver_version'
-      - task: PowerShell@2
-        inputs:
-          targetType: 'inline'
-          script: |
-            $sharedDirectory = "C:\Shared"
+      - ${{ if eq(parameters.cleanOnly, false) }}:
+        - task: NodeTool@0
+          displayName: Install Node
+          inputs:
+            versionSource: 'spec'
+            versionSpec: '20.x'
+            checkLatest: true
+        - task: Npm@1
+          displayName: Download Chromedriver
+          inputs:
+            command: 'custom'
+            customCommand: 'install chromedriver --detect_chromedriver_version'
+        - task: PowerShell@2
+          displayName: Delete old files
+          inputs:
+            targetType: 'inline'
+            script: |
+              $sharedDirectory = "C:\Shared"
 
-            Write-Host Deleting old files
-            Get-ChildItem -Path $sharedDirectory | ForEach-Object -Process { 
-              if($_.attributes -eq "Directory") {
-                Remove-Item -Path $_.FullName -Recurse -Force
-              } else {
-                Remove-Item -Path $_.FullName -Force
-              }
-            }
-      - task: CopyFiles@2
-        inputs:
-          SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
-          Contents: 'chromedriver.exe'
-          TargetFolder: 'C:/Shared'
-      - task: AzureCLI@2
-        inputs:
-          azureSubscription: 'MD-VS'
-          scriptType: 'pscore'
-          scriptLocation: 'inlineScript'
-          inlineScript: |
-            $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
-            $numMachines = 9
-            $hostIp = ""+(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet 5").IPAddress
-            $sharedDir = "\\$hostIp\Shared"
-            $buildDir = "$sharedDir\Build"
-            $uiTestsDir = "$buildDir\UITests"
-            $localSharedDir = "C:\Shared"
-            $localBuildDir = "$localSharedDir\Build"
-            $localUiTestsDir = "$localBuildDir\UITests"
-            $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
-            $orgUrl = "https://dev.azure.com/MooDPlatform/"
-            $projectName = "MooD"
-            $resourceGroup = "ui-tests"
-            $vmPrefix = "ui-tests-vm-"
-            $vmImageUrl = "/subscriptions/0c8dec2a-b188-4313-a3e2-70f255ada0b9/resourceGroups/ui-tests/providers/Microsoft.Compute/galleries/UITestsGallery/images/UITestsDefinition"
-            $vmUser = "testuser"
-            $vmPassword = "Ts0rg123_Ts0rg123"
-            $moodDir = "C:\Program Files (x86)\MooD\17"
-
-            Write-Host Ensuring old VMs are deleted
-            1..10 | ForEach-Object -Parallel { 
-                az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --force-deletion true --yes --force-deletion true --yes
-            } -ThrottleLimit 10
-
-            Write-Host Downloading latest build artifacts
-            Write-Host Getting build id
-            $buildId = az pipelines runs list --org $orgUrl --project $projectName --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
-            az pipelines runs artifact download --artifact-name CPPTestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
-            az pipelines runs artifact download --artifact-name UITestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
-            az pipelines runs artifact download --artifact-name MooD --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
-
-            Write-Host Extracting UITests locally
-            Expand-Archive -LiteralPath "${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
-
-            Write-Host Listing test names
-            $testNamesFile = "$localBuildDir\TestNames.txt"
-            & $vstest "$localUiTestsDir\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${testNamesFile}"
-            $tests = Get-Content $testNamesFile
-
-            Write-Host Splitting tests per VM
-            $splitTests = @($null) * $numMachines
-            0..($numMachines - 1) | ForEach-Object { $splitTests[$_] = [System.Collections.Generic.List[string]]::new() }
-            0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
-            0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
-
-            Write-Host Test case filters:
-            1..$numMachines | ForEach-Object { 
-                Write-Host VM"$_": $splitTests[$_ - 1]
-            }
-
-            Write-Host Creating VMs
-            1..$numMachines | ForEach-Object -Parallel { 
-                az vm create --resource-group $using:resourceGroup --name "$($using:vmPrefix)${_}" --image $using:vmImageUrl --specialized --license-type Windows_Client --admin-password $using:vmPassword --admin-username $using:vmUser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
-            } -ThrottleLimit $numMachines
-
-            Write-Host Getting VM ips
-            $ips = [System.Collections.ArrayList]@()
-            1..$numMachines | ForEach-Object { 
-                $ip = az vm list-ip-addresses --resource-group $resourceGroup --name "${vmPrefix}${_}" --query [0].virtualMachine.network.privateIpAddresses[0] 
-                $ips.Add($ip.Replace('"', '')) | Out-Null
-            }
-
-            Write-Host Sleeping for 150 seconds to let VMs boot
-            Start-Sleep -Seconds 150
-
-            Write-Host Trusting VM ips
-            $ipsStr = $ips -join ','
-            $ipsStr = '"' + $ipsStr + '"'
-            winrm set winrm/config/client "@{TrustedHosts=$ipsStr}"
-
-            $script = @"
-            `$tempDir = "C:\Temp"
-            `$tempBuildDir = "`$tempDir\Build"
-
-            Write-Host Copying setup files locally
-            Copy-item -Path $sharedDir -Destination `$tempDir -Recurse
-
-            Write-Host Finding BA installer
-            `$results = Get-ChildItem -Path `$tempBuildDir |
-              Where-Object Name -match ".*BusinessArchitectSetup.exe" | 
-              Select-Object FullName
-            `$installerFilename = `$results[0].FullName
-
-            Write-Host Installing MooD
-            `$processStartInfo = new-object "Diagnostics.ProcessStartInfo"
-            `$processStartInfo.FileName = `$installerFilename
-            `$processStartInfo.Arguments = "/quiet"
-            `$process = [Diagnostics.Process]::Start(`$processStartInfo)
-            `$process.WaitForExit();
-                
-            Write-Host Extracting CppTests
-            Expand-Archive -LiteralPath "`$tempBuildDir\CppTests.zip" -DestinationPath "$moodDir" -Force
-                            
-            Write-Host Extracting UITests
-            Expand-Archive -LiteralPath "`$tempBuildDir\UITests.zip" -DestinationPath "$moodDir" -Force
-
-            Write-Host Replacing Chromedriver
-            Copy-item -Path "`$tempDir\chromedriver.exe" -Destination "$moodDir"
-
-            Write-Host Installing licence
-            [microsoft.win32.registry]::SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\MooD International\Licence\17.0", "licencepath", "`$tempBuildDir\Internallicence.xml")
-
-            Write-Host Creating rep
-            & "$moodDir\MooDRepositoryManager.com" addserver /server localhost 
-            & "$moodDir\MooDRepositoryManager.com" create /server "localhost" /name "17Test1a"
-
-            Write-Host Running tests
-            "@
-
-            $jobs = [System.Collections.ArrayList]@()
-
-            Write-Host Starting tests
-            for ($i = 0; $i -lt $numMachines; $i++) {
-                $job = Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
-                    Out-File -FilePath C:\Users\testuser\Desktop\RunTests.ps1 -InputObject $args[0]
-                    $i = $args[1] + 1
-                    $tests = $args[2]
-                    
-                    $vstestCmd = '& ' + "$using:vstest" + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"'
-                    Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstestCmd
-
-                    Start-ScheduledTask -TaskName "Run Tests"
-                    do {
-                        $state = Get-ScheduledTask -TaskName "Run Tests" | Select-Object -expand State
-                        Start-Sleep -Milliseconds 500
-                    } while ($state -eq "Running")
-                } -AsJob -ArgumentList @($script, $i, $splitTests[$i])
-
-                $jobs.Add($job) | Out-Null
-            }
-
-            Write-Host Waiting for tests to finish
-            $jobs | Receive-Job -Wait -AutoRemoveJob
-
-            Write-Host Updating machine name for tests
-            1..$numMachines | ForEach-Object -Parallel { 
-                $resultsFile = "$using:sharedDir\Tests_$_.trx"
-                $xml = [xml](Get-Content -Path $resultsFile)
-                $nodes = $xml.SelectNodes("//*[@computerName]");
-                foreach($node in $nodes) {
-                    $node.SetAttribute("computerName", "VM $_");
+              Write-Host Deleting old files
+              Get-ChildItem -Path $sharedDirectory | ForEach-Object -Process { 
+                if($_.attributes -eq "Directory") {
+                  Remove-Item -Path $_.FullName -Recurse -Force
+                } else {
+                  Remove-Item -Path $_.FullName -Force
                 }
-                $xml.Save($resultsFile)
-            } -ThrottleLimit $numMachines
+              }
+        - task: CopyFiles@2
+          displayName: Copy Chromedriver to shared folder
+          inputs:
+            SourceFolder: '$(Agent.BuildDirectory)/s/node_modules/chromedriver/lib/chromedriver'
+            Contents: 'chromedriver.exe'
+            TargetFolder: 'C:/Shared'
+        - task: AzureCLI@2
+          displayName: Setup and run testS
+          env:
+            parameter.numMachines: ${{ parameters.numMachines }}
+          inputs:
+            azureSubscription: 'MD-VS'
+            scriptType: 'pscore'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
+              $numMachines = $env:numMachines
+              $hostIp = ""+(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet 5").IPAddress
+              $sharedDir = "\\$hostIp\Shared"
+              $buildDir = "$sharedDir\Build"
+              $uiTestsDir = "$buildDir\UITests"
+              $localSharedDir = "C:\Shared"
+              $localBuildDir = "$localSharedDir\Build"
+              $localUiTestsDir = "$localBuildDir\UITests"
+              $vstest = "C:\Users\testuser\Desktop\TestPlatform\vstest.console.exe"
+              $orgUrl = "https://dev.azure.com/MooDPlatform/"
+              $projectName = "MooD"
+              $resourceGroup = "ui-tests"
+              $vmPrefix = "ui-tests-vm-"
+              $vmImageUrl = "/subscriptions/0c8dec2a-b188-4313-a3e2-70f255ada0b9/resourceGroups/ui-tests/providers/Microsoft.Compute/galleries/UITestsGallery/images/UITestsDefinition"
+              $vmUser = "testuser"
+              $vmPassword = "Ts0rg123_Ts0rg123"
+              $moodDir = "C:\Program Files (x86)\MooD\17"
 
-            Write-Host Deleting VMs
-            1..$numMachines | ForEach-Object -Parallel { 
-                az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --no-wait --force-deletion true --yes
-            } -ThrottleLimit $numMachines
-      - task: PublishTestResults@2
-        inputs:
-          testResultsFormat: 'VSTest'
-          testResultsFiles: '*.trx'
-          searchFolder: 'C:/Shared/'
-          mergeTestResults: true
+              Write-Host Ensuring old VMs are deleted
+              1..10 | ForEach-Object -Parallel { 
+                  az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --force-deletion true --yes --force-deletion true --yes
+              } -ThrottleLimit 10
+
+              Write-Host Downloading latest build artifacts
+              Write-Host Getting build id
+              $buildId = az pipelines runs list --org $orgUrl --project $projectName --query "[?definition.name=='MooD Trunk Nightly Build'].buildNumber | [0]"
+              az pipelines runs artifact download --artifact-name CPPTestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
+              az pipelines runs artifact download --artifact-name UITestsZip --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
+              az pipelines runs artifact download --artifact-name MooD --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
+
+              Write-Host Extracting UITests locally
+              Expand-Archive -LiteralPath "${buildDir}\UITests.zip" -DestinationPath $uiTestsDir -Force
+
+              Write-Host Listing test names
+              $testNamesFile = "$localBuildDir\TestNames.txt"
+              & $vstest "$localUiTestsDir\Test_UI.dll" /ListFullyQualifiedTests "/ListTestsTargetPath:${testNamesFile}"
+              $tests = Get-Content $testNamesFile
+
+              Write-Host Splitting tests per VM
+              $splitTests = @($null) * $numMachines
+              0..($numMachines - 1) | ForEach-Object { $splitTests[$_] = [System.Collections.Generic.List[string]]::new() }
+              0..($tests.Length - 1) | ForEach-Object { $splitTests[$_ % $numMachines].Add($tests[$_]) }
+              0..($splitTests.Length - 1) | ForEach-Object { $splitTests[$_] = $splitTests[$_] -join '|' }
+
+              Write-Host Test case filters:
+              1..$numMachines | ForEach-Object { 
+                  Write-Host VM"$_": $splitTests[$_ - 1]
+              }
+
+              Write-Host Creating VMs
+              1..$numMachines | ForEach-Object -Parallel { 
+                  az vm create --resource-group $using:resourceGroup --name "$($using:vmPrefix)${_}" --image $using:vmImageUrl --specialized --license-type Windows_Client --admin-password $using:vmPassword --admin-username $using:vmUser --security-type TrustedLaunch --size Standard_D2s_v3 --public-ip-address '""' --os-disk-delete-option delete --nic-delete-option delete
+              } -ThrottleLimit $numMachines
+
+              Write-Host Getting VM ips
+              $ips = [System.Collections.ArrayList]@()
+              1..$numMachines | ForEach-Object { 
+                  $ip = az vm list-ip-addresses --resource-group $resourceGroup --name "${vmPrefix}${_}" --query [0].virtualMachine.network.privateIpAddresses[0] 
+                  $ips.Add($ip.Replace('"', '')) | Out-Null
+              }
+
+              Write-Host Sleeping for 150 seconds to let VMs boot
+              Start-Sleep -Seconds 150
+
+              Write-Host Trusting VM ips
+              $ipsStr = $ips -join ','
+              $ipsStr = '"' + $ipsStr + '"'
+              winrm set winrm/config/client "@{TrustedHosts=$ipsStr}"
+
+              $script = @"
+              `$tempDir = "C:\Temp"
+              `$tempBuildDir = "`$tempDir\Build"
+
+              Write-Host Copying setup files locally
+              Copy-item -Path $sharedDir -Destination `$tempDir -Recurse
+
+              Write-Host Finding BA installer
+              `$results = Get-ChildItem -Path `$tempBuildDir |
+                Where-Object Name -match ".*BusinessArchitectSetup.exe" | 
+                Select-Object FullName
+              `$installerFilename = `$results[0].FullName
+
+              Write-Host Installing MooD
+              `$processStartInfo = new-object "Diagnostics.ProcessStartInfo"
+              `$processStartInfo.FileName = `$installerFilename
+              `$processStartInfo.Arguments = "/quiet"
+              `$process = [Diagnostics.Process]::Start(`$processStartInfo)
+              `$process.WaitForExit();
+                  
+              Write-Host Extracting CppTests
+              Expand-Archive -LiteralPath "`$tempBuildDir\CppTests.zip" -DestinationPath "$moodDir" -Force
+                              
+              Write-Host Extracting UITests
+              Expand-Archive -LiteralPath "`$tempBuildDir\UITests.zip" -DestinationPath "$moodDir" -Force
+
+              Write-Host Replacing Chromedriver
+              Copy-item -Path "`$tempDir\chromedriver.exe" -Destination "$moodDir"
+
+              Write-Host Installing licence
+              [microsoft.win32.registry]::SetValue("HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\MooD International\Licence\17.0", "licencepath", "`$tempBuildDir\Internallicence.xml")
+
+              Write-Host Creating rep
+              & "$moodDir\MooDRepositoryManager.com" addserver /server localhost 
+              & "$moodDir\MooDRepositoryManager.com" create /server "localhost" /name "17Test1a"
+
+              Write-Host Running tests
+              "@
+
+              $jobs = [System.Collections.ArrayList]@()
+
+              Write-Host Starting tests
+              for ($i = 0; $i -lt $numMachines; $i++) {
+                  $job = Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
+                      Out-File -FilePath C:\Users\testuser\Desktop\RunTests.ps1 -InputObject $args[0]
+                      $i = $args[1] + 1
+                      $tests = $args[2]
+                      
+                      $vstestCmd = '& ' + "$using:vstest" + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"'
+                      Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstestCmd
+
+                      Start-ScheduledTask -TaskName "Run Tests"
+                      do {
+                          $state = Get-ScheduledTask -TaskName "Run Tests" | Select-Object -expand State
+                          Start-Sleep -Milliseconds 500
+                      } while ($state -eq "Running")
+                  } -AsJob -ArgumentList @($script, $i, $splitTests[$i])
+
+                  $jobs.Add($job) | Out-Null
+              }
+
+              Write-Host Waiting for tests to finish
+              $jobs | Receive-Job -Wait -AutoRemoveJob
+
+              Write-Host Updating machine name for tests
+              1..$numMachines | ForEach-Object -Parallel { 
+                  $resultsFile = "$using:sharedDir\Tests_$_.trx"
+                  $xml = [xml](Get-Content -Path $resultsFile)
+                  $nodes = $xml.SelectNodes("//*[@computerName]");
+                  foreach($node in $nodes) {
+                      $node.SetAttribute("computerName", "VM $_");
+                  }
+                  $xml.Save($resultsFile)
+              } -ThrottleLimit $numMachines
+
+              Write-Host Deleting VMs
+              1..$numMachines | ForEach-Object -Parallel { 
+                  az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --no-wait --force-deletion true --yes
+              } -ThrottleLimit $numMachines
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'VSTest'
+            testResultsFiles: '*.trx'
+            searchFolder: 'C:/Shared/'
+            mergeTestResults: true
+      - ${{ if eq(parameters.deleteVMs, true) }}:
+        - task: AzureCLI@2
+          displayName: Delete VMs
+          inputs:
+            azureSubscription: 'MD-VS'
+            scriptType: 'pscore'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              $env:AZURE_DEVOPS_EXT_PAT = "$(System.AccessToken)"
+              $numMachines = $env:numMachines
+              $resourceGroup = "ui-tests"
+              $vmPrefix = "ui-tests-vm-"
+
+              Write-Host Deleting VMs
+              1..$numMachines | ForEach-Object -Parallel { 
+                  az vm delete -g $using:resourceGroup -n "$($using:vmPrefix)${_}" --no-wait --force-deletion true --yes
+              } -ThrottleLimit $numMachines
