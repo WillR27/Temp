@@ -239,7 +239,7 @@ jobs:
             testResultsFiles: '*.trx'
             searchFolder: 'C:/Shared/'
             mergeTestResults: true
-      - ${{ if eq(parameters.deleteVMs, true) }}:
+      - ${{ if or(eq(parameters.deleteVMs, true), eq(parameters.cleanOnly, true)) }}:
         - task: AzureCLI@2
           displayName: Delete VMs
           env:
