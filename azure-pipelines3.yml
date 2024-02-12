@@ -35,7 +35,7 @@ parameters:
   type: object
   default: 
     Delete this line and specify a list of filters like so to run specific test cases (each line is run its own VM up to the max):
-    testFilters:
+    testCaseFilters:
     - Name=Test1|Name=Test2
     - Name=Test3|Name=Test4
     - FullyQualifiedName=Test5
@@ -125,14 +125,14 @@ jobs:
               az pipelines runs artifact download --artifact-name MooD --path $buildDir --run-id $buildId --org $orgUrl --project $projectName
 
               $testCaseFilters = [System.Collections.ArrayList]@()
-              $testCaseFiltersProvided = $testCaseFiltersJson.PSobject.Properties.Name.Count -ne 1
+              $testCaseFiltersProvided = $testCaseFiltersJson.PSobject.Properties.Name.Count -eq 1
 
               Write-Host $testCaseFiltersJson
 
               if ($testCaseFiltersProvided) {
                 Write-Host Using provided test case filters
                 $testCaseFilters = [System.Collections.ArrayList]@()
-                $testCaseFiltersJson | ForEach-Object { 
+                $testCaseFiltersJson.testCaseFilters | ForEach-Object { 
                   $testCaseFilters.Add($_) | Out-Null
                 }
                 $numMachines = $testCaseFilters.Count
