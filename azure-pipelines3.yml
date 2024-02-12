@@ -126,6 +126,8 @@ jobs:
               $testCaseFilters = [System.Collections.ArrayList]@()
               $testCaseFiltersProvided = $testCaseFiltersJson.PSobject.Properties.Name.Count -ne 1
 
+              Write-Host $testCaseFiltersJson
+
               if ($testCaseFiltersProvided) {
                 Write-Host Using provided test case filters
                 $testCaseFilters = [System.Collections.ArrayList]@()
