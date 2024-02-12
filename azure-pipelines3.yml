@@ -35,6 +35,7 @@ parameters:
   type: object
   default: 
     Delete this line and specify a list of filters like so to run specific test cases (each line is run its own VM up to the max):
+    testFilters:
     - Name=Test1|Name=Test2
     - Name=Test3|Name=Test4
     - FullyQualifiedName=Test5
