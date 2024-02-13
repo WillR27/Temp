@@ -211,7 +211,8 @@ jobs:
               & "$moodDir\MooDRepositoryManager.com" addserver /server localhost 
               & "$moodDir\MooDRepositoryManager.com" create /server "localhost" /name "17Test1a"
 
-              Write-Host Running tests
+              `$env:CAPTUREOVERNIGHTOUTPUT='yes'
+              `$env:OVERNIGHTOUTPUTDIR='$sharedDir'
               "@
 
               $jobs = [System.Collections.ArrayList]@()
@@ -229,7 +230,7 @@ jobs:
                       $vstestCmd = '& ' + "$using:vstest" + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"'
                       Add-Content -Path $testScriptFile -Value $vstestCmd
 
-                      $action= New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-FilePath $testScriptFile"
+                      $action= New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File $testScriptFile"
                       Register-ScheduledTask -TaskName $taskName -User testuser -Action $action -RunLevel Highest -Force
 
                       Start-ScheduledTask -TaskName $taskName
