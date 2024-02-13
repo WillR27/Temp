@@ -311,7 +311,7 @@ jobs:
                   }
 
                   $fileName = $value.testCaseTitle + '.png'
-                  $imgFile = $sharedDir/" + $fileName
+                  $imgFile = "$sharedDir/" + $fileName
                   Write-Host $fileName
                   if ((Test-Path $imgFile) -and ([String]::IsNullOrWhiteSpace((Get-content $imgFile)) -eq $false)) {
                       Write-Host $imgFile
