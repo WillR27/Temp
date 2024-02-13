@@ -263,6 +263,71 @@ jobs:
             testResultsFiles: '*.trx'
             searchFolder: 'C:/Shared/'
             mergeTestResults: true
+        - task: AzureCLI@2
+          displayName: Upload test files
+          inputs:
+            azureSubscription: 'MD-VS'
+            scriptType: 'ps'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              $hostIp = ""+(Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet 5").IPAddress
+              $sharedDir = "\\$hostIp\Shared"
+              $maxDate = (Get-Date).AddDays(1).ToString("yyyy-MM-dd")
+              $minDate = (Get-Date).AddDays(-3).ToString("yyyy-MM-dd")
+              $headers = "Authorization=Bearer $(System.AccessToken)"
+
+              $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs?minLastUpdatedDate="'+"$minDate"+'"&maxLastUpdatedDate="'+"$maxDate"+'"&buildIds=$(Build.BuildId)&api-version=6.0"'
+              $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
+              Write-Host $res
+              $res = $res | ConvertFrom-Json
+
+              $testRunId = $res.value[0].id
+              Write-Host $testRunId
+
+              $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/runs/"'+"$testRunId"+'"/results?api-version=6.0"'
+              $res = az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --headers $headers
+              Write-Host $res
+              $res = $res | ConvertFrom-Json
+
+              foreach ($value in $res.value) {
+                  $fileName = $value.testCaseTitle + '.log'
+                  $logFile = "$sharedDir/" + $fileName
+                  $tempJsonFile = "C:\temp\file.json"
+
+                  Write-Host $fileName
+                  if ((Test-Path $logFile) -and ([String]::IsNullOrWhiteSpace((Get-content $logFile)) -eq $false)) {
+                      Write-Host $logFile
+                      $fileStream = [convert]::ToBase64String((Get-Content -path $logFile -Encoding byte))
+                      $testId = $value.id
+                      $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
+                      $body = (@{
+                          stream=$fileStream;
+                          fileName=$fileName;
+                          comment="Log";
+                          attachmentType="GeneralAttachment"
+                      } | ConvertTo-Json -Compress) | Out-File $tempJsonFile
+
+                      az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body "@$tempJsonFile" --headers $headers
+                  }
+
+                  $fileName = $value.testCaseTitle + '.png'
+                  $imgFile = 'C:/Temp/UiTestsOut/' + $fileName
+                  Write-Host $fileName
+                  if ((Test-Path $imgFile) -and ([String]::IsNullOrWhiteSpace((Get-content $imgFile)) -eq $false)) {
+                      Write-Host $imgFile
+                      $fileStream = [convert]::ToBase64String((Get-Content -path $imgFile -Encoding byte))
+                      $testId = $value.id
+                      $url = '"https://dev.azure.com/MooDPlatform/MooD/_apis/test/Runs/"'+"$testRunId"+'"/Results/"'+"$testId"+'"/attachments?api-version=7.1-preview.1"'
+                      $body = (@{
+                          stream=$fileStream;
+                          fileName=$fileName;
+                          comment="Screenshot";
+                          attachmentType="GeneralAttachment"
+                      } | ConvertTo-Json -Compress) | Out-File $tempJsonFile
+
+                      az rest --method post --resource 499b84ac-1321-427f-aa17-267ca6975798 --url $url --body "@$tempJsonFile" --headers $headers
+                  }
+              }
       - ${{ if or(eq(parameters.deleteVMs, true), eq(parameters.cleanOnly, true)) }}:
         - task: AzureCLI@2
           displayName: Delete VMs
