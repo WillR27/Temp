@@ -222,7 +222,7 @@ jobs:
                   $job = Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
                       $testScriptFile = "C:\Users\testuser\Desktop\RunTests.ps1"
                       $taskName = "Run UI Tests"
-                      $resultsDir = C:\Temp\Res
+                      $resultsDir = "C:\Temp\Res"
                       $i = $args[1] + 1
                       $tests = $args[2]
 
