@@ -228,10 +228,10 @@ jobs:
 
                       Out-File -FilePath $testScriptFile -InputObject $args[0]
                       
-                      $vstestCmd = '& ' + "$using:vstest" + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"' + ' /ResultsDirectory:$resultsFolder'
+                      $vstestCmd = '& ' + "$using:vstest" + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"' + ' /ResultsDirectory:' + $resultsFolder
                       Add-Content -Path $testScriptFile -Value $vstestCmd
 
-                      $copyResultFiles = 'Copy-Item $resultsFolder\* -Destination $using:sharedDir -Recurse -Force'
+                      $copyResultFiles = 'Copy-Item ' + $resultsFolder + '\* -Destination ' + $using:sharedDir + ' -Recurse -Force'
                       Add-Content -Path $testScriptFile -Value $copyResultFiles
 
                       $action= New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-File $testScriptFile"
