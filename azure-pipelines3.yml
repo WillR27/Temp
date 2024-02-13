@@ -127,8 +127,6 @@ jobs:
               $testCaseFilters = [System.Collections.ArrayList]@()
               $testCaseFiltersProvided = $testCaseFiltersJson.PSobject.Properties.Name.Count -eq 1
 
-              Write-Host $testCaseFiltersJson
-
               if ($testCaseFiltersProvided) {
                 Write-Host Using provided test case filters
                 $testCaseFilters = [System.Collections.ArrayList]@()
@@ -222,16 +220,22 @@ jobs:
               Write-Host Starting tests
               for ($i = 0; $i -lt $numMachines; $i++) {
                   $job = Invoke-Command -ComputerName $ips[$i] -ScriptBlock {
-                      Out-File -FilePath C:\Users\testuser\Desktop\RunTests.ps1 -InputObject $args[0]
+                      $testScriptFile = "C:\Users\testuser\Desktop\RunTests.ps1"
+                      $taskName = "Run UI Tests"
                       $i = $args[1] + 1
                       $tests = $args[2]
+
+                      Out-File -FilePath $testScriptFile -InputObject $args[0]
                       
                       $vstestCmd = '& ' + "$using:vstest" + ' "' + $using:moodDir + '\Test_UI.dll" "/TestCaseFilter:' + "$tests" + '" "/Logger:trx;LogFileName=' + $using:sharedDir + '\Tests_' + "$i" + '.trx"'
-                      Add-Content -Path C:\Users\testuser\Desktop\RunTests.ps1 -Value $vstestCmd
+                      Add-Content -Path $testScriptFile -Value $vstestCmd
 
-                      Start-ScheduledTask -TaskName "Run Tests"
+                      $action= New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-FilePath $testScriptFile"
+                      Register-ScheduledTask -TaskName $taskName -User testuser -Action $action -RunLevel Highest -Force
+
+                      Start-ScheduledTask -TaskName $taskName
                       do {
-                          $state = Get-ScheduledTask -TaskName "Run Tests" | Select-Object -expand State
+                          $state = Get-ScheduledTask -TaskName $taskName | Select-Object -expand State
                           Start-Sleep -Milliseconds 500
                       } while ($state -eq "Running")
                   } -AsJob -ArgumentList @($script, $i, $testCaseFilters[$i])
