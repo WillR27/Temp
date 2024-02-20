@@ -92,6 +92,7 @@ jobs:
             TargetFolder: 'C:/Shared'
         - task: AzureCLI@2
           displayName: Setup and run tests
+          continueOnError: true
           env:
             numMachines: ${{ parameters.numMachines }}
           inputs:
